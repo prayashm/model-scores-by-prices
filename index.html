@@ -172,6 +172,8 @@
           <input type="checkbox" id="showOpenSource">
           Open source only
         </label>
+        <span style="border-left:1px solid #333;height:1.2rem"></span>
+        <input type="text" id="searchInput" placeholder="Search models…" style="background:#1a1a1a;border:1px solid #333;color:#e0e0e0;padding:0.3rem 0.6rem;border-radius:6px;font-size:0.85rem;width:180px" />
       </div>
       <div class="chart-container">
         <canvas id="chart"></canvas>
@@ -243,11 +245,19 @@ function computePareto(models) {
   return pareto;
 }
 
+function isMatch(model, query) {
+  if (!query) return true;
+  const q = query.toLowerCase();
+  return model.name.toLowerCase().includes(q) || model.org.toLowerCase().includes(q);
+}
+
 function buildChart() {
   const showLabels = document.getElementById('showLabels').checked;
   const showPareto = document.getElementById('showPareto').checked;
   const openOnly = document.getElementById('showOpenSource').checked;
   const scaleType = document.getElementById('scaleSelect').value;
+  const searchQuery = document.getElementById('searchInput').value.trim();
+  const hasSearch = searchQuery.length > 0;
 
   let models = RAW_DATA.models;
   if (openOnly) models = models.filter(m => m.is_open_source);
@@ -256,37 +266,112 @@ function buildChart() {
   const paretoNames = new Set(pareto.map(p => p.name));
   const nonPareto = models.filter(m => !paretoNames.has(m.name));
 
+  // Dim factor for non-matching points when searching
+  const dimAlpha = 0.1;
+  const dimBorder = 0.15;
+  const dimRadius = 3;
+
+  function pointProps(m, baseAlpha, baseBorder, baseRadius, color) {
+    const matched = isMatch(m, searchQuery);
+    if (!hasSearch || matched) {
+      return {
+        backgroundColor: color.replace('ALPHA', baseAlpha),
+        borderColor: color.replace('ALPHA', baseBorder),
+        pointRadius: matched && hasSearch ? baseRadius + 3 : baseRadius,
+        borderWidth: matched && hasSearch ? 2.5 : 1,
+      };
+    }
+    return {
+      backgroundColor: color.replace('ALPHA', dimAlpha),
+      borderColor: color.replace('ALPHA', dimBorder),
+      pointRadius: dimRadius,
+      borderWidth: 0.5,
+    };
+  }
+
   const datasets = [];
 
+  // When searching, we need per-point styling, so use arrays
   const closedNP = nonPareto.filter(m => !m.is_open_source);
   if (closedNP.length) {
+    const bgColors = [], bdColors = [], radii = [], bdWidths = [];
+    closedNP.forEach(m => {
+      const matched = isMatch(m, searchQuery);
+      if (!hasSearch || matched) {
+        bgColors.push(matched && hasSearch ? 'rgba(96,165,250,0.9)' : 'rgba(96,165,250,0.5)');
+        bdColors.push('rgba(96,165,250,0.8)');
+        radii.push(matched && hasSearch ? 9 : 5);
+        bdWidths.push(matched && hasSearch ? 2.5 : 1);
+      } else {
+        bgColors.push('rgba(96,165,250,' + dimAlpha + ')');
+        bdColors.push('rgba(96,165,250,' + dimBorder + ')');
+        radii.push(dimRadius);
+        bdWidths.push(0.5);
+      }
+    });
     datasets.push({
       label: 'Closed source',
       data: closedNP.map(m => ({ x: m.blended_cost, y: m.score, meta: m })),
-      backgroundColor: 'rgba(96,165,250,0.5)',
-      borderColor: 'rgba(96,165,250,0.8)',
-      borderWidth: 1, pointRadius: 5, pointHoverRadius: 8,
+      backgroundColor: bgColors,
+      borderColor: bdColors,
+      pointRadius: radii,
+      borderWidth: bdWidths,
+      pointHoverRadius: 10,
     });
   }
 
   const openNP = nonPareto.filter(m => m.is_open_source);
   if (openNP.length) {
+    const bgColors = [], bdColors = [], radii = [], bdWidths = [];
+    openNP.forEach(m => {
+      const matched = isMatch(m, searchQuery);
+      if (!hasSearch || matched) {
+        bgColors.push(matched && hasSearch ? 'rgba(74,222,128,0.9)' : 'rgba(74,222,128,0.5)');
+        bdColors.push('rgba(74,222,128,0.8)');
+        radii.push(matched && hasSearch ? 9 : 5);
+        bdWidths.push(matched && hasSearch ? 2.5 : 1);
+      } else {
+        bgColors.push('rgba(74,222,128,' + dimAlpha + ')');
+        bdColors.push('rgba(74,222,128,' + dimBorder + ')');
+        radii.push(dimRadius);
+        bdWidths.push(0.5);
+      }
+    });
     datasets.push({
       label: 'Open source',
       data: openNP.map(m => ({ x: m.blended_cost, y: m.score, meta: m })),
-      backgroundColor: 'rgba(74,222,128,0.5)',
-      borderColor: 'rgba(74,222,128,0.8)',
-      borderWidth: 1, pointRadius: 5, pointHoverRadius: 8,
+      backgroundColor: bgColors,
+      borderColor: bdColors,
+      pointRadius: radii,
+      borderWidth: bdWidths,
+      pointHoverRadius: 10,
     });
   }
 
   if (pareto.length) {
+    const bgColors = [], bdColors = [], radii = [], bdWidths = [];
+    pareto.forEach(m => {
+      const matched = isMatch(m, searchQuery);
+      if (!hasSearch || matched) {
+        bgColors.push(matched && hasSearch ? 'rgba(245,158,11,1)' : 'rgba(245,158,11,0.7)');
+        bdColors.push('#f59e0b');
+        radii.push(matched && hasSearch ? 11 : 7);
+        bdWidths.push(matched && hasSearch ? 3 : 2);
+      } else {
+        bgColors.push('rgba(245,158,11,' + dimAlpha + ')');
+        bdColors.push('rgba(245,158,11,' + dimBorder + ')');
+        radii.push(dimRadius);
+        bdWidths.push(0.5);
+      }
+    });
     datasets.push({
       label: 'Pareto optimal',
       data: pareto.map(m => ({ x: m.blended_cost, y: m.score, meta: m })),
-      backgroundColor: 'rgba(245,158,11,0.7)',
-      borderColor: '#f59e0b',
-      borderWidth: 2, pointRadius: 7, pointHoverRadius: 10,
+      backgroundColor: bgColors,
+      borderColor: bdColors,
+      pointRadius: radii,
+      borderWidth: bdWidths,
+      pointHoverRadius: 12,
       pointStyle: 'rectRot',
     });
   }
@@ -303,7 +388,7 @@ function buildChart() {
       label: 'Pareto frontier',
       data: lineData,
       type: 'line',
-      borderColor: 'rgba(245,158,11,0.4)',
+      borderColor: hasSearch ? 'rgba(245,158,11,0.15)' : 'rgba(245,158,11,0.4)',
       borderWidth: 2, borderDash: [6, 3],
       pointRadius: 0, fill: false, tension: 0,
     });
@@ -376,12 +461,13 @@ function buildChart() {
         },
       },
     },
-    plugins: showLabels ? [{
+    plugins: [{
       id: 'labelPlugin',
       afterDatasetsDraw(chart) {
+        if (!showLabels) return;
+        const sq = document.getElementById('searchInput').value.trim().toLowerCase();
         const ctx = chart.ctx;
         ctx.save();
-        ctx.font = '10px -apple-system, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'bottom';
         chart.data.datasets.forEach((ds, di) => {
@@ -390,19 +476,41 @@ function buildChart() {
           meta.data.forEach((point, pi) => {
             const m = ds.data[pi]?.meta;
             if (!m) return;
-            ctx.fillStyle = ds.label === 'Pareto optimal' ? '#f59e0b' : 'rgba(255,255,255,0.45)';
+            const matched = isMatch(m, sq);
+            const isPareto = ds.label === 'Pareto optimal';
+            if (sq && !matched) {
+              // Dim label
+              ctx.font = '9px -apple-system, sans-serif';
+              ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            } else if (sq && matched) {
+              // Highlighted label
+              ctx.font = 'bold 12px -apple-system, sans-serif';
+              ctx.fillStyle = isPareto ? '#fbbf24' : '#fff';
+            } else {
+              // Normal label
+              ctx.font = '10px -apple-system, sans-serif';
+              ctx.fillStyle = isPareto ? '#f59e0b' : 'rgba(255,255,255,0.45)';
+            }
             ctx.fillText(m.name, point.x + 6, point.y - 4);
           });
         });
         ctx.restore();
       }
-    }] : [],
+    }],
   };
 
   if (chart) chart.destroy();
   chart = new Chart(document.getElementById('chart'), config);
 
   renderTable(pareto);
+
+  // Update match count
+  if (hasSearch) {
+    const matchCount = models.filter(m => isMatch(m, searchQuery)).length;
+    document.getElementById('searchInput').style.borderColor = matchCount > 0 ? '#60a5fa' : '#f87171';
+  } else {
+    document.getElementById('searchInput').style.borderColor = '#333';
+  }
 }
 
 function renderTable(pareto) {
@@ -480,6 +588,11 @@ document.getElementById('scaleSelect').addEventListener('change', buildChart);
 document.getElementById('showLabels').addEventListener('change', buildChart);
 document.getElementById('showPareto').addEventListener('change', buildChart);
 document.getElementById('showOpenSource').addEventListener('change', buildChart);
+let searchTimeout;
+document.getElementById('searchInput').addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(buildChart, 150);
+});
 document.getElementById('resetZoom').addEventListener('click', () => {
   if (chart) chart.resetZoom();
 });
