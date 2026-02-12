@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MMMU Score vs Cost — Pareto Frontier</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -53,7 +52,7 @@
       gap: 0.4rem;
       cursor: pointer;
     }
-    .controls select, .controls input[type="range"] {
+    .controls select {
       background: #1a1a1a;
       border: 1px solid #333;
       color: #e0e0e0;
@@ -94,7 +93,18 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
     }
+    .pareto-table th:hover { color: #fff; }
+    .pareto-table th .sort-arrow {
+      display: inline-block;
+      margin-left: 0.3rem;
+      font-size: 0.65rem;
+      color: #555;
+    }
+    .pareto-table th.sorted .sort-arrow { color: #60a5fa; }
     .pareto-table td {
       padding: 0.5rem 0.75rem;
       border-bottom: 1px solid #1a1a1a;
@@ -124,6 +134,14 @@
     .source-link a { color: #60a5fa; text-decoration: none; }
     .source-link a:hover { text-decoration: underline; }
     .cost-note { font-size: 0.75rem; color: #666; margin-top: 0.25rem; }
+    .latency-bar {
+      display: inline-block;
+      height: 6px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 0.4rem;
+    }
+    .na { color: #555; }
   </style>
 </head>
 <body>
@@ -170,12 +188,13 @@
       <table class="pareto-table" id="paretoTable">
         <thead>
           <tr>
-            <th>Model</th>
-            <th>Org</th>
-            <th>MMMU Score</th>
-            <th>Input $/M</th>
-            <th>Output $/M</th>
-            <th>Blended $/M</th>
+            <th data-sort="name">Model <span class="sort-arrow">▲▼</span></th>
+            <th data-sort="org">Org <span class="sort-arrow">▲▼</span></th>
+            <th data-sort="score">MMMU Score <span class="sort-arrow">▲▼</span></th>
+            <th data-sort="input_cost">Input $/M <span class="sort-arrow">▲▼</span></th>
+            <th data-sort="output_cost">Output $/M <span class="sort-arrow">▲▼</span></th>
+            <th data-sort="blended_cost">Blended $/M <span class="sort-arrow">▲▼</span></th>
+            <th data-sort="latency">Latency (s) <span class="sort-arrow">▲▼</span></th>
             <th>Tags</th>
           </tr>
         </thead>
@@ -191,25 +210,36 @@
   </div>
 
 <script>
-const RAW_DATA = {"models":[{"name":"Llama 3.2 11B Instruct","org":"Meta","score":0.507,"input_cost":0.05,"output_cost":0.05,"blended_cost":0.05,"is_open_source":true},{"name":"Phi-4-multimodal-instruct","org":"Microsoft","score":0.551,"input_cost":0.05,"output_cost":0.1,"blended_cost":0.0625,"is_open_source":true},{"name":"Nova Lite","org":"Amazon","score":0.562,"input_cost":0.06,"output_cost":0.24,"blended_cost":0.105,"is_open_source":false},{"name":"Gemini 2.0 Flash-Lite","org":"Google","score":0.68,"input_cost":0.07,"output_cost":0.3,"blended_cost":0.1275,"is_open_source":false},{"name":"Gemini 1.5 Flash 8B","org":"Google","score":0.537,"input_cost":0.07,"output_cost":0.3,"blended_cost":0.1275,"is_open_source":false},{"name":"Llama 4 Scout","org":"Meta","score":0.694,"input_cost":0.08,"output_cost":0.3,"blended_cost":0.135,"is_open_source":true},{"name":"Mistral Small 3.1 24B Base","org":"Mistral AI","score":0.5927,"input_cost":0.1,"output_cost":0.3,"blended_cost":0.15,"is_open_source":true},{"name":"Pixtral-12B","org":"Mistral AI","score":0.525,"input_cost":0.15,"output_cost":0.15,"blended_cost":0.15,"is_open_source":true},{"name":"Gemini 2.5 Flash-Lite","org":"Google","score":0.729,"input_cost":0.1,"output_cost":0.4,"blended_cost":0.175,"is_open_source":true},{"name":"Gemini 2.0 Flash","org":"Google","score":0.707,"input_cost":0.1,"output_cost":0.4,"blended_cost":0.175,"is_open_source":false},{"name":"GPT-4.1 nano","org":"OpenAI","score":0.554,"input_cost":0.1,"output_cost":0.4,"blended_cost":0.175,"is_open_source":false},{"name":"Gemini 1.5 Flash","org":"Google","score":0.623,"input_cost":0.15,"output_cost":0.6,"blended_cost":0.2625,"is_open_source":false},{"name":"GPT-4o mini","org":"OpenAI","score":0.594,"input_cost":0.15,"output_cost":0.6,"blended_cost":0.2625,"is_open_source":false},{"name":"Llama 4 Maverick","org":"Meta","score":0.734,"input_cost":0.17,"output_cost":0.6,"blended_cost":0.2775,"is_open_source":true},{"name":"Llama 3.2 90B Instruct","org":"Meta","score":0.603,"input_cost":0.35,"output_cost":0.4,"blended_cost":0.3625,"is_open_source":true},{"name":"GPT-4.1 mini","org":"OpenAI","score":0.727,"input_cost":0.4,"output_cost":1.6,"blended_cost":0.7,"is_open_source":false},{"name":"Gemini 1.0 Pro","org":"Google","score":0.479,"input_cost":0.5,"output_cost":1.5,"blended_cost":0.75,"is_open_source":false},{"name":"GPT-3.5 Turbo","org":"OpenAI","score":0.0,"input_cost":0.5,"output_cost":1.5,"blended_cost":0.75,"is_open_source":false},{"name":"Gemini 2.5 Flash","org":"Google","score":0.797,"input_cost":0.3,"output_cost":2.5,"blended_cost":0.85,"is_open_source":false},{"name":"Nova Pro","org":"Amazon","score":0.617,"input_cost":0.8,"output_cost":3.2,"blended_cost":1.4,"is_open_source":false},{"name":"o4-mini","org":"OpenAI","score":0.816,"input_cost":1.1,"output_cost":4.4,"blended_cost":1.925,"is_open_source":false},{"name":"Pixtral Large","org":"Mistral AI","score":0.64,"input_cost":2.0,"output_cost":6.0,"blended_cost":3.0,"is_open_source":true},{"name":"GPT-5.1","org":"OpenAI","score":0.854,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false},{"name":"GPT-5.1 Instant","org":"OpenAI","score":0.854,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false},{"name":"GPT-5.1 Thinking","org":"OpenAI","score":0.854,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false},{"name":"GPT-5","org":"OpenAI","score":0.842,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false},{"name":"Gemini 2.5 Pro Preview 06-05","org":"Google","score":0.82,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false},{"name":"Gemini 2.5 Pro","org":"Google","score":0.796,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false},{"name":"o3","org":"OpenAI","score":0.829,"input_cost":2.0,"output_cost":8.0,"blended_cost":3.5,"is_open_source":false},{"name":"GPT-4.1","org":"OpenAI","score":0.748,"input_cost":2.0,"output_cost":8.0,"blended_cost":3.5,"is_open_source":false},{"name":"Grok-2","org":"xAI","score":0.661,"input_cost":2.0,"output_cost":10.0,"blended_cost":4.0,"is_open_source":false},{"name":"GPT-4o","org":"OpenAI","score":0.722,"input_cost":2.5,"output_cost":10.0,"blended_cost":4.375,"is_open_source":false},{"name":"Gemini 1.5 Pro","org":"Google","score":0.659,"input_cost":2.5,"output_cost":10.0,"blended_cost":4.375,"is_open_source":false},{"name":"Grok-3","org":"xAI","score":0.78,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false},{"name":"Claude 3.7 Sonnet","org":"Anthropic","score":0.75,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false},{"name":"Claude Sonnet 4","org":"Anthropic","score":0.744,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false},{"name":"Claude 3.5 Sonnet","org":"Anthropic","score":0.683,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false},{"name":"o1","org":"OpenAI","score":0.776,"input_cost":15.0,"output_cost":60.0,"blended_cost":26.25,"is_open_source":false},{"name":"GPT-4.5","org":"OpenAI","score":0.752,"input_cost":75.0,"output_cost":150.0,"blended_cost":93.75,"is_open_source":false},{"name":"DeepSeek VL2","org":"DeepSeek","score":0.511,"input_cost":9.5,"output_cost":4800.0,"blended_cost":1207.125,"is_open_source":true}],"pareto":[{"name":"Llama 3.2 11B Instruct","org":"Meta","score":0.507,"input_cost":0.05,"output_cost":0.05,"blended_cost":0.05,"is_open_source":true},{"name":"Phi-4-multimodal-instruct","org":"Microsoft","score":0.551,"input_cost":0.05,"output_cost":0.1,"blended_cost":0.0625,"is_open_source":true},{"name":"Nova Lite","org":"Amazon","score":0.562,"input_cost":0.06,"output_cost":0.24,"blended_cost":0.105,"is_open_source":false},{"name":"Gemini 2.0 Flash-Lite","org":"Google","score":0.68,"input_cost":0.07,"output_cost":0.3,"blended_cost":0.1275,"is_open_source":false},{"name":"Llama 4 Scout","org":"Meta","score":0.694,"input_cost":0.08,"output_cost":0.3,"blended_cost":0.135,"is_open_source":true},{"name":"Gemini 2.5 Flash-Lite","org":"Google","score":0.729,"input_cost":0.1,"output_cost":0.4,"blended_cost":0.175,"is_open_source":true},{"name":"Llama 4 Maverick","org":"Meta","score":0.734,"input_cost":0.17,"output_cost":0.6,"blended_cost":0.2775,"is_open_source":true},{"name":"Gemini 2.5 Flash","org":"Google","score":0.797,"input_cost":0.3,"output_cost":2.5,"blended_cost":0.85,"is_open_source":false},{"name":"o4-mini","org":"OpenAI","score":0.816,"input_cost":1.1,"output_cost":4.4,"blended_cost":1.925,"is_open_source":false},{"name":"GPT-5.1","org":"OpenAI","score":0.854,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false}],"benchmark":{"name":"MMMU","description":"MMMU (Massive Multi-discipline Multimodal Understanding) is a benchmark designed to evaluate multimodal models on college-level subject knowledge and deliberate reasoning. Contains 11.5K meticulously collected multimodal questions from college exams, quizzes, and textbooks, covering six core disciplines: Art & Design, Business, Science, Health & Medicine, Humanities & Social Science, and Tech & Engineering across 30 subjects and 183 subfields.","max_score":1.0}};
-
-const orgColors = {
-  'OpenAI': '#60a5fa',
-  'Google': '#34d399',
-  'Meta': '#a78bfa',
-  'Anthropic': '#f472b6',
-  'Amazon': '#fb923c',
-  'Microsoft': '#38bdf8',
-  'Alibaba': '#fbbf24',
-  'DeepSeek': '#f87171',
-  'Mistral': '#c084fc',
-};
-
-function getColor(org, isOpen) {
-  return isOpen ? '#4ade80' : '#60a5fa';
-}
+const RAW_DATA = {"models":[{"name":"Llama 3.2 11B Instruct","org":"Meta","score":0.507,"input_cost":0.05,"output_cost":0.05,"blended_cost":0.05,"is_open_source":true,"latency":0.2,"latency_provider":"Fireworks"},{"name":"Phi-4-multimodal-instruct","org":"Microsoft","score":0.551,"input_cost":0.05,"output_cost":0.1,"blended_cost":0.0625,"is_open_source":true,"latency":0.5,"latency_provider":"DeepInfra"},{"name":"Nova Lite","org":"Amazon","score":0.562,"input_cost":0.06,"output_cost":0.24,"blended_cost":0.105,"is_open_source":false,"latency":0.5,"latency_provider":"Bedrock"},{"name":"Gemini 2.0 Flash-Lite","org":"Google","score":0.68,"input_cost":0.07,"output_cost":0.3,"blended_cost":0.1275,"is_open_source":false,"latency":0.7,"latency_provider":"Google"},{"name":"Gemini 1.5 Flash 8B","org":"Google","score":0.537,"input_cost":0.07,"output_cost":0.3,"blended_cost":0.1275,"is_open_source":false,"latency":0.3,"latency_provider":"Google"},{"name":"Llama 4 Scout","org":"Meta","score":0.694,"input_cost":0.08,"output_cost":0.3,"blended_cost":0.135,"is_open_source":true,"latency":0.31,"latency_provider":"DeepInfra"},{"name":"Mistral Small 3.1 24B Base","org":"Mistral AI","score":0.5927,"input_cost":0.1,"output_cost":0.3,"blended_cost":0.15,"is_open_source":true,"latency":0.23,"latency_provider":"Mistral AI"},{"name":"Pixtral-12B","org":"Mistral AI","score":0.525,"input_cost":0.15,"output_cost":0.15,"blended_cost":0.15,"is_open_source":true,"latency":0.5,"latency_provider":"Mistral AI"},{"name":"Gemini 2.5 Flash-Lite","org":"Google","score":0.729,"input_cost":0.1,"output_cost":0.4,"blended_cost":0.175,"is_open_source":true,"latency":0.44,"latency_provider":"Google"},{"name":"Gemini 2.0 Flash","org":"Google","score":0.707,"input_cost":0.1,"output_cost":0.4,"blended_cost":0.175,"is_open_source":false,"latency":0.4,"latency_provider":"Google"},{"name":"GPT-4.1 nano","org":"OpenAI","score":0.554,"input_cost":0.1,"output_cost":0.4,"blended_cost":0.175,"is_open_source":false,"latency":2.0,"latency_provider":"OpenAI"},{"name":"Gemini 1.5 Flash","org":"Google","score":0.623,"input_cost":0.15,"output_cost":0.6,"blended_cost":0.2625,"is_open_source":false,"latency":0.3,"latency_provider":"Google"},{"name":"GPT-4o mini","org":"OpenAI","score":0.594,"input_cost":0.15,"output_cost":0.6,"blended_cost":0.2625,"is_open_source":false,"latency":0.52,"latency_provider":"Azure"},{"name":"Llama 4 Maverick","org":"Meta","score":0.734,"input_cost":0.17,"output_cost":0.6,"blended_cost":0.2775,"is_open_source":true,"latency":0.2,"latency_provider":"Together"},{"name":"Llama 3.2 90B Instruct","org":"Meta","score":0.603,"input_cost":0.35,"output_cost":0.4,"blended_cost":0.3625,"is_open_source":true,"latency":0.5,"latency_provider":"DeepInfra"},{"name":"GPT-4.1 mini","org":"OpenAI","score":0.727,"input_cost":0.4,"output_cost":1.6,"blended_cost":0.7,"is_open_source":false,"latency":5.0,"latency_provider":"OpenAI"},{"name":"Gemini 1.0 Pro","org":"Google","score":0.479,"input_cost":0.5,"output_cost":1.5,"blended_cost":0.75,"is_open_source":false,"latency":0.4,"latency_provider":"Google"},{"name":"GPT-3.5 Turbo","org":"OpenAI","score":0.0,"input_cost":0.5,"output_cost":1.5,"blended_cost":0.75,"is_open_source":false,"latency":0.5,"latency_provider":"OpenAI"},{"name":"Gemini 2.5 Flash","org":"Google","score":0.797,"input_cost":0.3,"output_cost":2.5,"blended_cost":0.85,"is_open_source":false,"latency":0.7,"latency_provider":"Google"},{"name":"Nova Pro","org":"Amazon","score":0.617,"input_cost":0.8,"output_cost":3.2,"blended_cost":1.4,"is_open_source":false,"latency":0.5,"latency_provider":"Bedrock"},{"name":"o4-mini","org":"OpenAI","score":0.816,"input_cost":1.1,"output_cost":4.4,"blended_cost":1.925,"is_open_source":false,"latency":5.2,"latency_provider":"OpenAI"},{"name":"Pixtral Large","org":"Mistral AI","score":0.64,"input_cost":2.0,"output_cost":6.0,"blended_cost":3.0,"is_open_source":true,"latency":0.5,"latency_provider":"Mistral AI"},{"name":"GPT-5.1","org":"OpenAI","score":0.854,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false,"latency":2.0,"latency_provider":"OpenAI"},{"name":"GPT-5.1 Instant","org":"OpenAI","score":0.854,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false,"latency":2.0,"latency_provider":"OpenAI"},{"name":"GPT-5.1 Thinking","org":"OpenAI","score":0.854,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false,"latency":3.0,"latency_provider":"OpenAI"},{"name":"GPT-5","org":"OpenAI","score":0.842,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false,"latency":2.0,"latency_provider":"OpenAI"},{"name":"Gemini 2.5 Pro Preview 06-05","org":"Google","score":0.82,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false,"latency":0.7,"latency_provider":"Google"},{"name":"Gemini 2.5 Pro","org":"Google","score":0.796,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false,"latency":0.7,"latency_provider":"Google"},{"name":"o3","org":"OpenAI","score":0.829,"input_cost":2.0,"output_cost":8.0,"blended_cost":3.5,"is_open_source":false,"latency":20.0,"latency_provider":"OpenAI"},{"name":"GPT-4.1","org":"OpenAI","score":0.748,"input_cost":2.0,"output_cost":8.0,"blended_cost":3.5,"is_open_source":false,"latency":10.0,"latency_provider":"OpenAI"},{"name":"Grok-2","org":"xAI","score":0.661,"input_cost":2.0,"output_cost":10.0,"blended_cost":4.0,"is_open_source":false,"latency":0.7,"latency_provider":"xAI"},{"name":"GPT-4o","org":"OpenAI","score":0.722,"input_cost":2.5,"output_cost":10.0,"blended_cost":4.375,"is_open_source":false,"latency":0.5,"latency_provider":"OpenAI"},{"name":"Gemini 1.5 Pro","org":"Google","score":0.659,"input_cost":2.5,"output_cost":10.0,"blended_cost":4.375,"is_open_source":false,"latency":0.7,"latency_provider":"Google"},{"name":"Grok-3","org":"xAI","score":0.78,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":0.7,"latency_provider":"xAI"},{"name":"Claude 3.7 Sonnet","org":"Anthropic","score":0.75,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":0.4,"latency_provider":"Anthropic"},{"name":"Claude Sonnet 4","org":"Anthropic","score":0.744,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":0.4,"latency_provider":"Google"},{"name":"Claude 3.5 Sonnet","org":"Anthropic","score":0.683,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":0.4,"latency_provider":"Google"},{"name":"o1","org":"OpenAI","score":0.776,"input_cost":15.0,"output_cost":60.0,"blended_cost":26.25,"is_open_source":false,"latency":0.54,"latency_provider":"Azure"},{"name":"GPT-4.5","org":"OpenAI","score":0.752,"input_cost":75.0,"output_cost":150.0,"blended_cost":93.75,"is_open_source":false,"latency":20.0,"latency_provider":"OpenAI"},{"name":"DeepSeek VL2","org":"DeepSeek","score":0.511,"input_cost":9.5,"output_cost":4800.0,"blended_cost":1207.125,"is_open_source":true,"latency":0.5,"latency_provider":"Replicate"}],"pareto":[{"name":"Llama 3.2 11B Instruct","org":"Meta","score":0.507,"input_cost":0.05,"output_cost":0.05,"blended_cost":0.05,"is_open_source":true,"latency":0.2,"latency_provider":"Fireworks"},{"name":"Phi-4-multimodal-instruct","org":"Microsoft","score":0.551,"input_cost":0.05,"output_cost":0.1,"blended_cost":0.0625,"is_open_source":true,"latency":0.5,"latency_provider":"DeepInfra"},{"name":"Nova Lite","org":"Amazon","score":0.562,"input_cost":0.06,"output_cost":0.24,"blended_cost":0.105,"is_open_source":false,"latency":0.5,"latency_provider":"Bedrock"},{"name":"Gemini 2.0 Flash-Lite","org":"Google","score":0.68,"input_cost":0.07,"output_cost":0.3,"blended_cost":0.1275,"is_open_source":false,"latency":0.7,"latency_provider":"Google"},{"name":"Llama 4 Scout","org":"Meta","score":0.694,"input_cost":0.08,"output_cost":0.3,"blended_cost":0.135,"is_open_source":true,"latency":0.31,"latency_provider":"DeepInfra"},{"name":"Gemini 2.5 Flash-Lite","org":"Google","score":0.729,"input_cost":0.1,"output_cost":0.4,"blended_cost":0.175,"is_open_source":true,"latency":0.44,"latency_provider":"Google"},{"name":"Llama 4 Maverick","org":"Meta","score":0.734,"input_cost":0.17,"output_cost":0.6,"blended_cost":0.2775,"is_open_source":true,"latency":0.2,"latency_provider":"Together"},{"name":"Gemini 2.5 Flash","org":"Google","score":0.797,"input_cost":0.3,"output_cost":2.5,"blended_cost":0.85,"is_open_source":false,"latency":0.7,"latency_provider":"Google"},{"name":"o4-mini","org":"OpenAI","score":0.816,"input_cost":1.1,"output_cost":4.4,"blended_cost":1.925,"is_open_source":false,"latency":5.2,"latency_provider":"OpenAI"},{"name":"GPT-5.1","org":"OpenAI","score":0.854,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false,"latency":2.0,"latency_provider":"OpenAI"}],"benchmark":{"name":"MMMU","description":"MMMU (Massive Multi-discipline Multimodal Understanding) is a benchmark designed to evaluate multimodal models on college-level subject knowledge and deliberate reasoning. Contains 11.5K meticulously collected multimodal questions from college exams, quizzes, and textbooks, covering six core disciplines: Art & Design, Business, Science, Health & Medicine, Humanities & Social Science, and Tech & Engineering across 30 subjects and 183 subfields.","max_score":1.0}};
 
 let chart;
+let currentSort = { key: 'blended_cost', asc: true };
+
+function getLatencyColor(lat) {
+  if (lat === null) return '#333';
+  if (lat <= 1) return '#4ade80';
+  if (lat <= 3) return '#fbbf24';
+  if (lat <= 10) return '#fb923c';
+  return '#f87171';
+}
+
+function getLatencyBarWidth(lat, maxLat) {
+  if (lat === null) return 0;
+  return Math.max(4, (lat / maxLat) * 60);
+}
+
+function computePareto(models) {
+  const sorted = [...models].sort((a, b) => a.blended_cost - b.blended_cost);
+  const pareto = [];
+  let maxScore = -1;
+  for (const m of sorted) {
+    if (m.score > maxScore) {
+      pareto.push(m);
+      maxScore = m.score;
+    }
+  }
+  return pareto;
+}
 
 function buildChart() {
   const showLabels = document.getElementById('showLabels').checked;
@@ -220,24 +250,12 @@ function buildChart() {
   let models = RAW_DATA.models;
   if (openOnly) models = models.filter(m => m.is_open_source);
 
-  // Recompute pareto for filtered set
-  const sorted = [...models].sort((a, b) => a.blended_cost - b.blended_cost);
-  const pareto = [];
-  let maxScore = -1;
-  for (const m of sorted) {
-    if (m.score > maxScore) {
-      pareto.push(m);
-      maxScore = m.score;
-    }
-  }
+  const pareto = computePareto(models);
   const paretoNames = new Set(pareto.map(p => p.name));
-
-  // Non-pareto points
   const nonPareto = models.filter(m => !paretoNames.has(m.name));
 
   const datasets = [];
 
-  // Non-pareto closed
   const closedNP = nonPareto.filter(m => !m.is_open_source);
   if (closedNP.length) {
     datasets.push({
@@ -245,13 +263,10 @@ function buildChart() {
       data: closedNP.map(m => ({ x: m.blended_cost, y: m.score, meta: m })),
       backgroundColor: 'rgba(96,165,250,0.5)',
       borderColor: 'rgba(96,165,250,0.8)',
-      borderWidth: 1,
-      pointRadius: 5,
-      pointHoverRadius: 8,
+      borderWidth: 1, pointRadius: 5, pointHoverRadius: 8,
     });
   }
 
-  // Non-pareto open
   const openNP = nonPareto.filter(m => m.is_open_source);
   if (openNP.length) {
     datasets.push({
@@ -259,29 +274,22 @@ function buildChart() {
       data: openNP.map(m => ({ x: m.blended_cost, y: m.score, meta: m })),
       backgroundColor: 'rgba(74,222,128,0.5)',
       borderColor: 'rgba(74,222,128,0.8)',
-      borderWidth: 1,
-      pointRadius: 5,
-      pointHoverRadius: 8,
+      borderWidth: 1, pointRadius: 5, pointHoverRadius: 8,
     });
   }
 
-  // Pareto points
   if (pareto.length) {
     datasets.push({
       label: 'Pareto optimal',
       data: pareto.map(m => ({ x: m.blended_cost, y: m.score, meta: m })),
       backgroundColor: 'rgba(245,158,11,0.7)',
       borderColor: '#f59e0b',
-      borderWidth: 2,
-      pointRadius: 7,
-      pointHoverRadius: 10,
+      borderWidth: 2, pointRadius: 7, pointHoverRadius: 10,
       pointStyle: 'rectRot',
     });
   }
 
-  // Pareto line
   if (showPareto && pareto.length > 1) {
-    // Step-wise line: for each pareto point, add a horizontal step to the next
     const lineData = [];
     for (let i = 0; i < pareto.length; i++) {
       lineData.push({ x: pareto[i].blended_cost, y: pareto[i].score });
@@ -294,11 +302,8 @@ function buildChart() {
       data: lineData,
       type: 'line',
       borderColor: 'rgba(245,158,11,0.4)',
-      borderWidth: 2,
-      borderDash: [6, 3],
-      pointRadius: 0,
-      fill: false,
-      tension: 0,
+      borderWidth: 2, borderDash: [6, 3],
+      pointRadius: 0, fill: false, tension: 0,
     });
   }
 
@@ -308,19 +313,13 @@ function buildChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: {
-        mode: 'nearest',
-        intersect: true,
-      },
+      interaction: { mode: 'nearest', intersect: true },
       plugins: {
         legend: { display: false },
         tooltip: {
           backgroundColor: '#1a1a1a',
-          borderColor: '#333',
-          borderWidth: 1,
-          titleColor: '#fff',
-          bodyColor: '#ccc',
-          padding: 12,
+          borderColor: '#333', borderWidth: 1,
+          titleColor: '#fff', bodyColor: '#ccc', padding: 12,
           callbacks: {
             title(items) {
               const m = items[0]?.raw?.meta;
@@ -329,42 +328,31 @@ function buildChart() {
             label(item) {
               const m = item.raw?.meta;
               if (!m) return '';
-              return [
+              const lines = [
                 `Score: ${(m.score * 100).toFixed(1)}%`,
                 `Input: $${m.input_cost}/M`,
                 `Output: $${m.output_cost}/M`,
                 `Blended: $${m.blended_cost}/M`,
-                m.is_open_source ? '🟢 Open source' : '🔵 Closed source',
               ];
+              if (m.latency !== null) lines.push(`Latency: ${m.latency}s`);
+              lines.push(m.is_open_source ? '🟢 Open source' : '🔵 Closed source');
+              return lines;
             },
           },
         },
-        // Data labels
-        ...(showLabels ? {} : {}),
       },
       scales: {
         x: {
           type: scaleType === 'log' ? 'logarithmic' : 'linear',
           title: { display: true, text: 'Blended Cost ($/M tokens)', color: '#888' },
           grid: { color: '#1a1a1a' },
-          ticks: {
-            color: '#666',
-            callback(val) {
-              return '$' + val;
-            },
-          },
+          ticks: { color: '#666', callback(val) { return '$' + val; } },
         },
         y: {
           title: { display: true, text: 'MMMU Score', color: '#888' },
           grid: { color: '#1a1a1a' },
-          ticks: {
-            color: '#666',
-            callback(val) {
-              return (val * 100).toFixed(0) + '%';
-            },
-          },
-          min: 0.3,
-          max: 0.95,
+          ticks: { color: '#666', callback(val) { return (val * 100).toFixed(0) + '%'; } },
+          min: 0.3, max: 0.95,
         },
       },
     },
@@ -376,15 +364,13 @@ function buildChart() {
         ctx.font = '10px -apple-system, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'bottom';
-
         chart.data.datasets.forEach((ds, di) => {
           if (ds.label === 'Pareto frontier') return;
           const meta = chart.getDatasetMeta(di);
           meta.data.forEach((point, pi) => {
             const m = ds.data[pi]?.meta;
             if (!m) return;
-            const isPareto = ds.label === 'Pareto optimal';
-            ctx.fillStyle = isPareto ? '#f59e0b' : 'rgba(255,255,255,0.45)';
+            ctx.fillStyle = ds.label === 'Pareto optimal' ? '#f59e0b' : 'rgba(255,255,255,0.45)';
             ctx.fillText(m.name, point.x + 6, point.y - 4);
           });
         });
@@ -396,10 +382,35 @@ function buildChart() {
   if (chart) chart.destroy();
   chart = new Chart(document.getElementById('chart'), config);
 
-  // Update table
+  renderTable(pareto);
+}
+
+function renderTable(pareto) {
+  const paretoNames = new Set(pareto.map(p => p.name));
+  const maxLat = Math.max(...pareto.map(m => m.latency || 0), 1);
+
+  // Sort
+  const sorted = [...pareto].sort((a, b) => {
+    const key = currentSort.key;
+    let av = a[key], bv = b[key];
+    // Handle nulls (push to end)
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    if (typeof av === 'string') {
+      av = av.toLowerCase(); bv = bv.toLowerCase();
+    }
+    if (av < bv) return currentSort.asc ? -1 : 1;
+    if (av > bv) return currentSort.asc ? 1 : -1;
+    return 0;
+  });
+
   const tbody = document.querySelector('#paretoTable tbody');
   tbody.innerHTML = '';
-  pareto.forEach(m => {
+  sorted.forEach(m => {
+    const latBar = m.latency !== null
+      ? `<span class="latency-bar" style="background:${getLatencyColor(m.latency)};width:${getLatencyBarWidth(m.latency, maxLat)}px"></span>${m.latency}s`
+      : '<span class="na">n/a</span>';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="font-weight:600;color:#fff">${m.name}</td>
@@ -408,14 +419,42 @@ function buildChart() {
       <td>$${m.input_cost}</td>
       <td>$${m.output_cost}</td>
       <td>$${m.blended_cost}</td>
+      <td>${latBar}</td>
       <td>
-        ${paretoNames.has(m.name) ? '<span class=\"pareto-badge\">Pareto</span> ' : ''}
-        ${m.is_open_source ? '<span class=\"open-source-badge\">OSS</span>' : ''}
+        <span class="pareto-badge">Pareto</span>
+        ${m.is_open_source ? ' <span class="open-source-badge">OSS</span>' : ''}
       </td>
     `;
     tbody.appendChild(tr);
   });
+
+  // Update sort indicators
+  document.querySelectorAll('#paretoTable th').forEach(th => {
+    const key = th.dataset.sort;
+    th.classList.toggle('sorted', key === currentSort.key);
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) {
+      arrow.textContent = key === currentSort.key
+        ? (currentSort.asc ? '▲' : '▼')
+        : '▲▼';
+    }
+  });
 }
+
+// Sort click handlers
+document.querySelectorAll('#paretoTable th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.sort;
+    if (currentSort.key === key) {
+      currentSort.asc = !currentSort.asc;
+    } else {
+      currentSort.key = key;
+      // Default: descending for score, ascending for cost/latency
+      currentSort.asc = ['name', 'org', 'input_cost', 'output_cost', 'blended_cost', 'latency'].includes(key);
+    }
+    buildChart(); // rebuilds table too
+  });
+});
 
 document.getElementById('scaleSelect').addEventListener('change', buildChart);
 document.getElementById('showLabels').addEventListener('change', buildChart);
