@@ -1,0 +1,461 @@
+{
+  "models": [
+    {
+      "name": "Llama 3.2 11B Instruct",
+      "org": "Meta",
+      "score": 0.507,
+      "input_cost": 0.05,
+      "output_cost": 0.05,
+      "blended_cost": 0.05,
+      "is_open_source": true
+    },
+    {
+      "name": "Phi-4-multimodal-instruct",
+      "org": "Microsoft",
+      "score": 0.551,
+      "input_cost": 0.05,
+      "output_cost": 0.1,
+      "blended_cost": 0.0625,
+      "is_open_source": true
+    },
+    {
+      "name": "Nova Lite",
+      "org": "Amazon",
+      "score": 0.562,
+      "input_cost": 0.06,
+      "output_cost": 0.24,
+      "blended_cost": 0.105,
+      "is_open_source": false
+    },
+    {
+      "name": "Gemini 2.0 Flash-Lite",
+      "org": "Google",
+      "score": 0.68,
+      "input_cost": 0.07,
+      "output_cost": 0.3,
+      "blended_cost": 0.1275,
+      "is_open_source": false
+    },
+    {
+      "name": "Gemini 1.5 Flash 8B",
+      "org": "Google",
+      "score": 0.537,
+      "input_cost": 0.07,
+      "output_cost": 0.3,
+      "blended_cost": 0.1275,
+      "is_open_source": false
+    },
+    {
+      "name": "Llama 4 Scout",
+      "org": "Meta",
+      "score": 0.694,
+      "input_cost": 0.08,
+      "output_cost": 0.3,
+      "blended_cost": 0.135,
+      "is_open_source": true
+    },
+    {
+      "name": "Mistral Small 3.1 24B Base",
+      "org": "Mistral AI",
+      "score": 0.5927,
+      "input_cost": 0.1,
+      "output_cost": 0.3,
+      "blended_cost": 0.15,
+      "is_open_source": true
+    },
+    {
+      "name": "Pixtral-12B",
+      "org": "Mistral AI",
+      "score": 0.525,
+      "input_cost": 0.15,
+      "output_cost": 0.15,
+      "blended_cost": 0.15,
+      "is_open_source": true
+    },
+    {
+      "name": "Gemini 2.5 Flash-Lite",
+      "org": "Google",
+      "score": 0.729,
+      "input_cost": 0.1,
+      "output_cost": 0.4,
+      "blended_cost": 0.175,
+      "is_open_source": true
+    },
+    {
+      "name": "Gemini 2.0 Flash",
+      "org": "Google",
+      "score": 0.707,
+      "input_cost": 0.1,
+      "output_cost": 0.4,
+      "blended_cost": 0.175,
+      "is_open_source": false
+    },
+    {
+      "name": "GPT-4.1 nano",
+      "org": "OpenAI",
+      "score": 0.554,
+      "input_cost": 0.1,
+      "output_cost": 0.4,
+      "blended_cost": 0.175,
+      "is_open_source": false
+    },
+    {
+      "name": "Gemini 1.5 Flash",
+      "org": "Google",
+      "score": 0.623,
+      "input_cost": 0.15,
+      "output_cost": 0.6,
+      "blended_cost": 0.2625,
+      "is_open_source": false
+    },
+    {
+      "name": "GPT-4o mini",
+      "org": "OpenAI",
+      "score": 0.594,
+      "input_cost": 0.15,
+      "output_cost": 0.6,
+      "blended_cost": 0.2625,
+      "is_open_source": false
+    },
+    {
+      "name": "Llama 4 Maverick",
+      "org": "Meta",
+      "score": 0.734,
+      "input_cost": 0.17,
+      "output_cost": 0.6,
+      "blended_cost": 0.2775,
+      "is_open_source": true
+    },
+    {
+      "name": "Llama 3.2 90B Instruct",
+      "org": "Meta",
+      "score": 0.603,
+      "input_cost": 0.35,
+      "output_cost": 0.4,
+      "blended_cost": 0.3625,
+      "is_open_source": true
+    },
+    {
+      "name": "GPT-4.1 mini",
+      "org": "OpenAI",
+      "score": 0.727,
+      "input_cost": 0.4,
+      "output_cost": 1.6,
+      "blended_cost": 0.7,
+      "is_open_source": false
+    },
+    {
+      "name": "Gemini 1.0 Pro",
+      "org": "Google",
+      "score": 0.479,
+      "input_cost": 0.5,
+      "output_cost": 1.5,
+      "blended_cost": 0.75,
+      "is_open_source": false
+    },
+    {
+      "name": "GPT-3.5 Turbo",
+      "org": "OpenAI",
+      "score": 0.0,
+      "input_cost": 0.5,
+      "output_cost": 1.5,
+      "blended_cost": 0.75,
+      "is_open_source": false
+    },
+    {
+      "name": "Gemini 2.5 Flash",
+      "org": "Google",
+      "score": 0.797,
+      "input_cost": 0.3,
+      "output_cost": 2.5,
+      "blended_cost": 0.85,
+      "is_open_source": false
+    },
+    {
+      "name": "Nova Pro",
+      "org": "Amazon",
+      "score": 0.617,
+      "input_cost": 0.8,
+      "output_cost": 3.2,
+      "blended_cost": 1.4,
+      "is_open_source": false
+    },
+    {
+      "name": "o4-mini",
+      "org": "OpenAI",
+      "score": 0.816,
+      "input_cost": 1.1,
+      "output_cost": 4.4,
+      "blended_cost": 1.925,
+      "is_open_source": false
+    },
+    {
+      "name": "Pixtral Large",
+      "org": "Mistral AI",
+      "score": 0.64,
+      "input_cost": 2.0,
+      "output_cost": 6.0,
+      "blended_cost": 3.0,
+      "is_open_source": true
+    },
+    {
+      "name": "GPT-5.1",
+      "org": "OpenAI",
+      "score": 0.854,
+      "input_cost": 1.25,
+      "output_cost": 10.0,
+      "blended_cost": 3.4375,
+      "is_open_source": false
+    },
+    {
+      "name": "GPT-5.1 Instant",
+      "org": "OpenAI",
+      "score": 0.854,
+      "input_cost": 1.25,
+      "output_cost": 10.0,
+      "blended_cost": 3.4375,
+      "is_open_source": false
+    },
+    {
+      "name": "GPT-5.1 Thinking",
+      "org": "OpenAI",
+      "score": 0.854,
+      "input_cost": 1.25,
+      "output_cost": 10.0,
+      "blended_cost": 3.4375,
+      "is_open_source": false
+    },
+    {
+      "name": "GPT-5",
+      "org": "OpenAI",
+      "score": 0.842,
+      "input_cost": 1.25,
+      "output_cost": 10.0,
+      "blended_cost": 3.4375,
+      "is_open_source": false
+    },
+    {
+      "name": "Gemini 2.5 Pro Preview 06-05",
+      "org": "Google",
+      "score": 0.82,
+      "input_cost": 1.25,
+      "output_cost": 10.0,
+      "blended_cost": 3.4375,
+      "is_open_source": false
+    },
+    {
+      "name": "Gemini 2.5 Pro",
+      "org": "Google",
+      "score": 0.796,
+      "input_cost": 1.25,
+      "output_cost": 10.0,
+      "blended_cost": 3.4375,
+      "is_open_source": false
+    },
+    {
+      "name": "o3",
+      "org": "OpenAI",
+      "score": 0.829,
+      "input_cost": 2.0,
+      "output_cost": 8.0,
+      "blended_cost": 3.5,
+      "is_open_source": false
+    },
+    {
+      "name": "GPT-4.1",
+      "org": "OpenAI",
+      "score": 0.748,
+      "input_cost": 2.0,
+      "output_cost": 8.0,
+      "blended_cost": 3.5,
+      "is_open_source": false
+    },
+    {
+      "name": "Grok-2",
+      "org": "xAI",
+      "score": 0.661,
+      "input_cost": 2.0,
+      "output_cost": 10.0,
+      "blended_cost": 4.0,
+      "is_open_source": false
+    },
+    {
+      "name": "GPT-4o",
+      "org": "OpenAI",
+      "score": 0.722,
+      "input_cost": 2.5,
+      "output_cost": 10.0,
+      "blended_cost": 4.375,
+      "is_open_source": false
+    },
+    {
+      "name": "Gemini 1.5 Pro",
+      "org": "Google",
+      "score": 0.659,
+      "input_cost": 2.5,
+      "output_cost": 10.0,
+      "blended_cost": 4.375,
+      "is_open_source": false
+    },
+    {
+      "name": "Grok-3",
+      "org": "xAI",
+      "score": 0.78,
+      "input_cost": 3.0,
+      "output_cost": 15.0,
+      "blended_cost": 6.0,
+      "is_open_source": false
+    },
+    {
+      "name": "Claude 3.7 Sonnet",
+      "org": "Anthropic",
+      "score": 0.75,
+      "input_cost": 3.0,
+      "output_cost": 15.0,
+      "blended_cost": 6.0,
+      "is_open_source": false
+    },
+    {
+      "name": "Claude Sonnet 4",
+      "org": "Anthropic",
+      "score": 0.744,
+      "input_cost": 3.0,
+      "output_cost": 15.0,
+      "blended_cost": 6.0,
+      "is_open_source": false
+    },
+    {
+      "name": "Claude 3.5 Sonnet",
+      "org": "Anthropic",
+      "score": 0.683,
+      "input_cost": 3.0,
+      "output_cost": 15.0,
+      "blended_cost": 6.0,
+      "is_open_source": false
+    },
+    {
+      "name": "o1",
+      "org": "OpenAI",
+      "score": 0.776,
+      "input_cost": 15.0,
+      "output_cost": 60.0,
+      "blended_cost": 26.25,
+      "is_open_source": false
+    },
+    {
+      "name": "GPT-4.5",
+      "org": "OpenAI",
+      "score": 0.752,
+      "input_cost": 75.0,
+      "output_cost": 150.0,
+      "blended_cost": 93.75,
+      "is_open_source": false
+    },
+    {
+      "name": "DeepSeek VL2",
+      "org": "DeepSeek",
+      "score": 0.511,
+      "input_cost": 9.5,
+      "output_cost": 4800.0,
+      "blended_cost": 1207.125,
+      "is_open_source": true
+    }
+  ],
+  "pareto": [
+    {
+      "name": "Llama 3.2 11B Instruct",
+      "org": "Meta",
+      "score": 0.507,
+      "input_cost": 0.05,
+      "output_cost": 0.05,
+      "blended_cost": 0.05,
+      "is_open_source": true
+    },
+    {
+      "name": "Phi-4-multimodal-instruct",
+      "org": "Microsoft",
+      "score": 0.551,
+      "input_cost": 0.05,
+      "output_cost": 0.1,
+      "blended_cost": 0.0625,
+      "is_open_source": true
+    },
+    {
+      "name": "Nova Lite",
+      "org": "Amazon",
+      "score": 0.562,
+      "input_cost": 0.06,
+      "output_cost": 0.24,
+      "blended_cost": 0.105,
+      "is_open_source": false
+    },
+    {
+      "name": "Gemini 2.0 Flash-Lite",
+      "org": "Google",
+      "score": 0.68,
+      "input_cost": 0.07,
+      "output_cost": 0.3,
+      "blended_cost": 0.1275,
+      "is_open_source": false
+    },
+    {
+      "name": "Llama 4 Scout",
+      "org": "Meta",
+      "score": 0.694,
+      "input_cost": 0.08,
+      "output_cost": 0.3,
+      "blended_cost": 0.135,
+      "is_open_source": true
+    },
+    {
+      "name": "Gemini 2.5 Flash-Lite",
+      "org": "Google",
+      "score": 0.729,
+      "input_cost": 0.1,
+      "output_cost": 0.4,
+      "blended_cost": 0.175,
+      "is_open_source": true
+    },
+    {
+      "name": "Llama 4 Maverick",
+      "org": "Meta",
+      "score": 0.734,
+      "input_cost": 0.17,
+      "output_cost": 0.6,
+      "blended_cost": 0.2775,
+      "is_open_source": true
+    },
+    {
+      "name": "Gemini 2.5 Flash",
+      "org": "Google",
+      "score": 0.797,
+      "input_cost": 0.3,
+      "output_cost": 2.5,
+      "blended_cost": 0.85,
+      "is_open_source": false
+    },
+    {
+      "name": "o4-mini",
+      "org": "OpenAI",
+      "score": 0.816,
+      "input_cost": 1.1,
+      "output_cost": 4.4,
+      "blended_cost": 1.925,
+      "is_open_source": false
+    },
+    {
+      "name": "GPT-5.1",
+      "org": "OpenAI",
+      "score": 0.854,
+      "input_cost": 1.25,
+      "output_cost": 10.0,
+      "blended_cost": 3.4375,
+      "is_open_source": false
+    }
+  ],
+  "benchmark": {
+    "name": "MMMU",
+    "description": "MMMU (Massive Multi-discipline Multimodal Understanding) is a benchmark designed to evaluate multimodal models on college-level subject knowledge and deliberate reasoning. Contains 11.5K meticulously collected multimodal questions from college exams, quizzes, and textbooks, covering six core disciplines: Art & Design, Business, Science, Health & Medicine, Humanities & Social Science, and Tech & Engineering across 30 subjects and 183 subfields.",
+    "max_score": 1.0
+  }
+}
