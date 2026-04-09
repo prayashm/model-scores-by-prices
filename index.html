@@ -3,158 +3,408 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MMMU Score vs Cost — Pareto Frontier</title>
+  <title>MMMU Benchmark — Score vs Cost</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
   <style>
+    :root {
+      --bg: #0d0d0f;
+      --surface: #161618;
+      --surface2: #1c1c1f;
+      --border: #2a2a2e;
+      --text: #e4e4e7;
+      --text2: #a1a1aa;
+      --text3: #52525b;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --green: #4ade80;
+      --amber: #fbbf24;
+      --red: #f87171;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0a0a0a;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
-      padding: 2rem;
-    }
-    .container { max-width: 1100px; margin: 0 auto; }
-    h1 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-      color: #fff;
-    }
-    .subtitle {
-      color: #888;
-      font-size: 0.9rem;
-      margin-bottom: 1.5rem;
-    }
-    .chart-wrapper {
-      background: #111;
-      border: 1px solid #222;
-      border-radius: 12px;
       padding: 1.5rem;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
       margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
-    .chart-container {
-      position: relative;
-      height: 550px;
+    .header-left h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
     }
-    .controls {
+    .header-left .subtitle {
+      color: var(--text2);
+      font-size: 0.875rem;
+      margin-top: 0.2rem;
+    }
+    .header-stats {
       display: flex;
       gap: 1rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 1rem;
+      text-align: center;
+      min-width: 80px;
+    }
+    .stat-card .val {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .stat-card .lbl {
+      font-size: 0.7rem;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.1rem;
+    }
+
+    /* ── Filters ── */
+    .filters {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
       margin-bottom: 1rem;
+      display: flex;
       flex-wrap: wrap;
+      gap: 0.75rem;
       align-items: center;
     }
-    .controls label {
-      font-size: 0.85rem;
-      color: #aaa;
+    .filter-group {
       display: flex;
       align-items: center;
+      gap: 0.5rem;
+    }
+    .filter-label {
+      font-size: 0.75rem;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    .provider-chips {
+      display: flex;
+      flex-wrap: wrap;
       gap: 0.4rem;
+    }
+    .chip {
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text2);
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .chip:hover { border-color: var(--text3); color: var(--text); }
+    .chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .chip.oss.active {
+      background: #16a34a;
+      border-color: #16a34a;
+    }
+    .search-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      width: 200px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--text3); }
+
+    /* Cost range */
+    .cost-range {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text2);
+    }
+    .cost-range input[type=range] {
+      width: 100px;
+      accent-color: var(--accent);
+    }
+
+    /* ── Chart ── */
+    .chart-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .chart-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .chart-toggle {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .chart-toggle button {
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chart-toggle button.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .chart-container { position: relative; height: 420px; }
+    .chart-meta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text3);
+    }
+    .chart-controls {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .chart-controls label {
+      font-size: 0.8rem;
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
       cursor: pointer;
     }
-    .controls select {
-      background: #1a1a1a;
-      border: 1px solid #333;
-      color: #e0e0e0;
-      padding: 0.3rem 0.5rem;
+    .chart-controls select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.25rem 0.5rem;
       border-radius: 6px;
-      font-size: 0.85rem;
-    }
-    .legend {
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
       font-size: 0.8rem;
-      color: #888;
-      margin-top: 0.75rem;
     }
-    .legend-item {
+    .btn-ghost {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--accent2);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-ghost:hover { border-color: var(--accent); }
+
+    /* ── Table ── */
+    .table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .table-header {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 0.4rem;
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--border);
     }
-    .legend-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
+    .table-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
     }
-    .pareto-table {
+    .table-header h2 span {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--text3);
+      margin-left: 0.5rem;
+    }
+    .table-scroll { overflow-x: auto; }
+    table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
+      min-width: 700px;
     }
-    .pareto-table th {
+    th {
       text-align: left;
-      padding: 0.6rem 0.75rem;
-      border-bottom: 2px solid #333;
-      color: #aaa;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text3);
       font-weight: 600;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       cursor: pointer;
       user-select: none;
       white-space: nowrap;
+      transition: color 0.15s;
     }
-    .pareto-table th:hover { color: #fff; }
-    .pareto-table th .sort-arrow {
+    th:hover { color: var(--text); }
+    th.sorted { color: var(--accent2); }
+    th .sort-arrow {
       display: inline-block;
       margin-left: 0.3rem;
-      font-size: 0.65rem;
-      color: #555;
+      font-size: 0.6rem;
+      opacity: 0.4;
     }
-    .pareto-table th.sorted .sort-arrow { color: #60a5fa; }
-    .pareto-table td {
-      padding: 0.5rem 0.75rem;
-      border-bottom: 1px solid #1a1a1a;
+    th.sorted .sort-arrow { opacity: 1; }
+    td {
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid #ffffff05;
+      color: var(--text);
     }
-    .pareto-table tr:hover td { background: #1a1a1a; }
-    .pareto-badge {
-      background: #2563eb22;
-      color: #60a5fa;
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
+    tr:hover td { background: #ffffff05; }
+    tr.highlighted td { background: rgba(99,102,241,0.12); }
+
+    /* Score bar */
+    .score-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    .open-source-badge {
-      background: #16a34a22;
-      color: #4ade80;
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .source-link {
-      font-size: 0.8rem;
-      color: #666;
-      margin-top: 1rem;
-    }
-    .source-link a { color: #60a5fa; text-decoration: none; }
-    .source-link a:hover { text-decoration: underline; }
-    .cost-note { font-size: 0.75rem; color: #666; margin-top: 0.25rem; }
-    .latency-bar {
-      display: inline-block;
-      height: 6px;
+    .score-bar-bg {
+      width: 60px;
+      height: 5px;
+      background: var(--surface2);
       border-radius: 3px;
-      vertical-align: middle;
-      margin-right: 0.4rem;
+      overflow: hidden;
     }
-    .na { color: #555; }
+    .score-bar {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.3s;
+    }
+
+    /* Org badge */
+    .org-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
+    .org-badge.open-source {
+      background: rgba(74,222,128,0.12);
+      border-color: rgba(74,222,128,0.3);
+      color: var(--green);
+    }
+
+    /* Tags */
+    .tag {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .tag-pareto {
+      background: rgba(251,191,36,0.15);
+      color: var(--amber);
+      border: 1px solid rgba(251,191,36,0.3);
+    }
+
+    /* Source */
+    .source {
+      font-size: 0.78rem;
+      color: var(--text3);
+      margin-top: 1rem;
+      text-align: center;
+    }
+    .source a { color: var(--accent2); text-decoration: none; }
+    .source a:hover { text-decoration: underline; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { padding: 1rem 0.75rem; }
+      .header { flex-direction: column; }
+      .chart-container { height: 300px; }
+      .filters { flex-direction: column; align-items: flex-start; }
+      .search-input { width: 100%; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>MMMU Score vs Cost — Pareto Frontier</h1>
-    <p class="subtitle">Which models give you the most benchmark performance per dollar?</p>
+<div class="container">
 
-    <div class="chart-wrapper">
-      <div class="controls">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>📊 MMMU Benchmark</h1>
+      <p class="subtitle">Multimodal reasoning score vs inference cost — 43 models, independently evaluated</p>
+    </div>
+    <div class="header-stats" id="headerStats"></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <span class="filter-label">Provider</span>
+      <div class="provider-chips" id="providerChips"></div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Cost ≤</span>
+      <div class="cost-range">
+        <input type="range" id="costSlider" min="0" max="15" step="0.5" value="15">
+        <span id="costVal">$15/M</span>
+      </div>
+    </div>
+    <div class="filter-group" style="margin-left:auto">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search models…">
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-wrapper">
+    <div class="chart-top">
+      <div class="chart-toggle">
+        <button id="btnAll" class="active">All Models</button>
+        <button id="btnPareto">Pareto Only</button>
+        <button id="btnOpenSrc">Open Source</button>
+      </div>
+      <div class="chart-controls">
         <label>
-          Scale:
+          Scale
           <select id="scaleSelect">
             <option value="log" selected>Log</option>
             <option value="linear">Linear</option>
@@ -165,232 +415,271 @@
           Labels
         </label>
         <label>
-          <input type="checkbox" id="showPareto" checked>
-          Pareto frontier
+          <input type="checkbox" id="showParetoLine" checked>
+          Frontier
         </label>
-        <label>
-          <input type="checkbox" id="showOpenSource">
-          Open source only
-        </label>
-        <span style="border-left:1px solid #333;height:1.2rem"></span>
-        <input type="text" id="searchInput" placeholder="Search models…" style="background:#1a1a1a;border:1px solid #333;color:#e0e0e0;padding:0.3rem 0.6rem;border-radius:6px;font-size:0.85rem;width:180px" />
+        <button class="btn-ghost" id="resetZoom">Reset Zoom</button>
       </div>
-      <div class="chart-container">
-        <canvas id="chart"></canvas>
-      </div>
-      <div class="legend">
-        <div class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span> Closed source</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#4ade80"></span> Open source</div>
-        <div class="legend-item"><span class="legend-dot" style="background:transparent;border:2px solid #f59e0b;width:8px;height:8px"></span> Pareto optimal</div>
-        <div class="legend-item" style="border-left:2px dashed #f59e0b;padding-left:0.5rem">Pareto frontier</div>
-      </div>
-      <p class="cost-note">Cost = blended $/M tokens (3:1 input:output ratio). Hover points for details. Scroll to zoom, drag to pan. <button id="resetZoom" style="background:#1a1a1a;border:1px solid #333;color:#60a5fa;padding:0.2rem 0.6rem;border-radius:4px;font-size:0.75rem;cursor:pointer;margin-left:0.5rem">Reset Zoom</button></p>
     </div>
+    <div class="chart-container">
+      <canvas id="chart"></canvas>
+    </div>
+    <div class="chart-meta">
+      <span>💰 Cost = blended $/M tokens (3:1 input:output ratio)</span>
+      <span>•</span>
+      <span>📍 Scroll to zoom • drag to pan</span>
+      <span>•</span>
+      <span>Source: layerlens.ai</span>
+    </div>
+  </div>
 
-    <div class="chart-wrapper">
-      <h2 style="font-size:1.1rem;margin-bottom:0.75rem;color:#fff">🏆 Pareto Optimal Models</h2>
-      <table class="pareto-table" id="paretoTable">
+  <!-- Table -->
+  <div class="table-wrapper">
+    <div class="table-header">
+      <h2>All Models <span id="modelCount"></span></h2>
+    </div>
+    <div class="table-scroll">
+      <table id="modelTable">
         <thead>
           <tr>
-            <th data-sort="name">Model <span class="sort-arrow">▲▼</span></th>
-            <th data-sort="org">Org <span class="sort-arrow">▲▼</span></th>
-            <th data-sort="score">MMMU Score <span class="sort-arrow">▲▼</span></th>
-            <th data-sort="input_cost">Input $/M <span class="sort-arrow">▲▼</span></th>
-            <th data-sort="output_cost">Output $/M <span class="sort-arrow">▲▼</span></th>
-            <th data-sort="blended_cost">Blended $/M <span class="sort-arrow">▲▼</span></th>
-            <th data-sort="latency">Latency (s) <span class="sort-arrow">▲▼</span></th>
+            <th data-sort="rank"># <span class="sort-arrow">↕</span></th>
+            <th data-sort="name">Model <span class="sort-arrow">↕</span></th>
+            <th data-sort="org">Provider <span class="sort-arrow">↕</span></th>
+            <th data-sort="score">MMMU Score <span class="sort-arrow">↕</span></th>
+            <th data-sort="input_cost">Input $/M <span class="sort-arrow">↕</span></th>
+            <th data-sort="output_cost">Output $/M <span class="sort-arrow">↕</span></th>
+            <th data-sort="blended_cost">Blended $/M <span class="sort-arrow">↕</span></th>
             <th>Tags</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
-
-    <p class="source-link">
-      Data from <a href="https://www.vals.ai/benchmarks/mmmu" target="_blank">Vals.ai MMMU benchmark</a>
-      (independently evaluated). Pricing from <a href="https://openrouter.ai" target="_blank">OpenRouter</a>.
-      Generated on <span id="genDate"></span>.
-    </p>
   </div>
 
+  <p class="source">
+    Data from <a href="https://layerlens.ai" target="_blank">LayerLens</a> via
+    <a href="https://pricepertoken.com/leaderboards/benchmark/mmmu" target="_blank">pricepertoken.com</a>.
+    Updated April 9, 2026.
+  </p>
+</div>
+
 <script>
-const RAW_DATA = {"models":[{"name":"Llama 3.2 11B","org":"Meta","score":0.3882,"input_cost":0.049,"output_cost":0.049,"blended_cost":0.049,"is_open_source":true,"latency":38.1,"source":"vals.ai"},{"name":"Llama 4 Scout","org":"Meta","score":0.5875,"input_cost":0.08,"output_cost":0.3,"blended_cost":0.135,"is_open_source":true,"latency":10.5,"source":"vals.ai"},{"name":"GPT-5 Nano","org":"OpenAI","score":0.7094,"input_cost":0.049999999999999996,"output_cost":0.39999999999999997,"blended_cost":0.1375,"is_open_source":false,"latency":30.8,"source":"vals.ai"},{"name":"Mistral Small","org":"Mistral AI","score":0.6008,"input_cost":0.09999999999999999,"output_cost":0.3,"blended_cost":0.15,"is_open_source":true,"latency":13.4,"source":"vals.ai"},{"name":"Gemini 2.5 Flash-Lite (thinking)","org":"Google","score":0.7543,"input_cost":0.09999999999999999,"output_cost":0.39999999999999997,"blended_cost":0.175,"is_open_source":false,"latency":25.7,"source":"vals.ai"},{"name":"Gemini 2.5 Flash-Lite","org":"Google","score":0.7254,"input_cost":0.09999999999999999,"output_cost":0.39999999999999997,"blended_cost":0.175,"is_open_source":false,"latency":20.1,"source":"vals.ai"},{"name":"Gemini 2.0 Flash","org":"Google","score":0.6979,"input_cost":0.09999999999999999,"output_cost":0.39999999999999997,"blended_cost":0.175,"is_open_source":false,"latency":45.2,"source":"vals.ai"},{"name":"GPT-4.1 Nano","org":"OpenAI","score":0.5505,"input_cost":0.09999999999999999,"output_cost":0.39999999999999997,"blended_cost":0.175,"is_open_source":false,"latency":7.3,"source":"vals.ai"},{"name":"Llama 4 Maverick","org":"Meta","score":0.7169,"input_cost":0.15,"output_cost":0.6,"blended_cost":0.2625,"is_open_source":true,"latency":7.9,"source":"vals.ai"},{"name":"GPT-4o Mini","org":"OpenAI","score":0.5656,"input_cost":0.15,"output_cost":0.6,"blended_cost":0.2625,"is_open_source":false,"latency":45.0,"source":"vals.ai"},{"name":"Grok 4 Fast (reasoning)","org":"xAI","score":0.7277,"input_cost":0.19999999999999998,"output_cost":0.5,"blended_cost":0.275,"is_open_source":false,"latency":19.5,"source":"vals.ai"},{"name":"Grok 4 Fast","org":"xAI","score":0.6341,"input_cost":0.19999999999999998,"output_cost":0.5,"blended_cost":0.275,"is_open_source":false,"latency":7.2,"source":"vals.ai"},{"name":"GPT-5 Mini","org":"OpenAI","score":0.7891,"input_cost":0.25,"output_cost":2.0,"blended_cost":0.6875,"is_open_source":false,"latency":26.7,"source":"vals.ai"},{"name":"GPT-4.1 Mini","org":"OpenAI","score":0.7054,"input_cost":0.39999999999999997,"output_cost":1.5999999999999999,"blended_cost":0.7,"is_open_source":false,"latency":8.2,"source":"vals.ai"},{"name":"Mistral Medium","org":"Mistral AI","score":0.6297,"input_cost":0.39999999999999997,"output_cost":2.0,"blended_cost":0.8,"is_open_source":true,"latency":12.6,"source":"vals.ai"},{"name":"Gemini 2.5 Flash (thinking)","org":"Google","score":0.8075,"input_cost":0.3,"output_cost":2.5,"blended_cost":0.85,"is_open_source":false,"latency":27.9,"source":"vals.ai"},{"name":"Gemini 2.5 Flash","org":"Google","score":0.7948,"input_cost":0.3,"output_cost":2.5,"blended_cost":0.85,"is_open_source":false,"latency":25.6,"source":"vals.ai"},{"name":"Kimi K2.5 Thinking","org":"Moonshot AI","score":0.8434,"input_cost":0.44999999999999996,"output_cost":2.25,"blended_cost":0.9,"is_open_source":false,"latency":110.0,"source":"vals.ai"},{"name":"Gemini 3 Flash Preview","org":"Google","score":0.8763,"input_cost":0.5,"output_cost":3.0,"blended_cost":1.125,"is_open_source":false,"latency":27.9,"source":"vals.ai"},{"name":"o4-mini","org":"OpenAI","score":0.7966,"input_cost":1.1,"output_cost":4.4,"blended_cost":1.925,"is_open_source":false,"latency":19.7,"source":"vals.ai"},{"name":"Claude Haiku 4.5 (thinking)","org":"Anthropic","score":0.4607,"input_cost":1.0,"output_cost":5.0,"blended_cost":2.0,"is_open_source":false,"latency":40.9,"source":"vals.ai"},{"name":"Mistral Large","org":"Mistral AI","score":0.6619,"input_cost":2.0,"output_cost":6.0,"blended_cost":3.0,"is_open_source":true,"latency":13.6,"source":"vals.ai"},{"name":"GPT-5.1","org":"OpenAI","score":0.8318,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false,"latency":75.3,"source":"vals.ai"},{"name":"GPT-5","org":"OpenAI","score":0.815,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false,"latency":72.3,"source":"vals.ai"},{"name":"Gemini 2.5 Pro","org":"Google","score":0.8134,"input_cost":1.25,"output_cost":10.0,"blended_cost":3.4375,"is_open_source":false,"latency":24.1,"source":"vals.ai"},{"name":"o3","org":"OpenAI","score":0.8042,"input_cost":2.0,"output_cost":8.0,"blended_cost":3.5,"is_open_source":false,"latency":39.3,"source":"vals.ai"},{"name":"GPT-4.1","org":"OpenAI","score":0.7239,"input_cost":2.0,"output_cost":8.0,"blended_cost":3.5,"is_open_source":false,"latency":12.0,"source":"vals.ai"},{"name":"GPT-4o","org":"OpenAI","score":0.6401,"input_cost":2.5,"output_cost":10.0,"blended_cost":4.375,"is_open_source":false,"latency":47.5,"source":"vals.ai"},{"name":"GPT-4o (Nov)","org":"OpenAI","score":0.6216,"input_cost":2.5,"output_cost":10.0,"blended_cost":4.375,"is_open_source":false,"latency":45.9,"source":"vals.ai"},{"name":"Gemini 3 Pro Preview","org":"Google","score":0.8751,"input_cost":2.0,"output_cost":12.0,"blended_cost":4.5,"is_open_source":false,"latency":48.1,"source":"vals.ai"},{"name":"GPT-5.2","org":"OpenAI","score":0.8667,"input_cost":1.75,"output_cost":14.0,"blended_cost":4.8125,"is_open_source":false,"latency":96.3,"source":"vals.ai"},{"name":"Claude Sonnet 4.5 (thinking)","org":"Anthropic","score":0.7931,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":56.4,"source":"vals.ai"},{"name":"Grok 4","org":"xAI","score":0.7627,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":102.8,"source":"vals.ai"},{"name":"Claude 3.7 Sonnet (thinking)","org":"Anthropic","score":0.751,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":69.6,"source":"vals.ai"},{"name":"Claude Sonnet 4 (thinking)","org":"Anthropic","score":0.7493,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":48.9,"source":"vals.ai"},{"name":"Grok 4.1 Fast (reasoning)","org":"xAI","score":0.7266,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":96.4,"source":"vals.ai"},{"name":"Claude Sonnet 4","org":"Anthropic","score":0.7239,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":10.8,"source":"vals.ai"},{"name":"Claude 3.7 Sonnet","org":"Anthropic","score":0.7152,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":8.3,"source":"vals.ai"},{"name":"Grok 4.1 Fast","org":"xAI","score":0.637,"input_cost":3.0,"output_cost":15.0,"blended_cost":6.0,"is_open_source":false,"latency":51.4,"source":"vals.ai"},{"name":"Claude Opus 4.6 (thinking)","org":"Anthropic","score":0.8387,"input_cost":5.0,"output_cost":25.0,"blended_cost":10.0,"is_open_source":false,"latency":119.0,"source":"vals.ai"},{"name":"Claude Opus 4.5 (thinking)","org":"Anthropic","score":0.8295,"input_cost":5.0,"output_cost":25.0,"blended_cost":10.0,"is_open_source":false,"latency":75.3,"source":"vals.ai"},{"name":"Claude Opus 4.5","org":"Anthropic","score":0.811,"input_cost":5.0,"output_cost":25.0,"blended_cost":10.0,"is_open_source":false,"latency":19.6,"source":"vals.ai"},{"name":"Claude 3.5 Sonnet","org":"Anthropic","score":0.688,"input_cost":6.0,"output_cost":30.0,"blended_cost":12.0,"is_open_source":false,"latency":46.0,"source":"vals.ai"},{"name":"o1","org":"OpenAI","score":0.7741,"input_cost":15.0,"output_cost":60.0,"blended_cost":26.25,"is_open_source":false,"latency":26.4,"source":"vals.ai"},{"name":"Claude Opus 4.1 (thinking)","org":"Anthropic","score":0.7751,"input_cost":15.0,"output_cost":75.0,"blended_cost":30.0,"is_open_source":false,"latency":2.4,"source":"vals.ai"},{"name":"Claude Opus 4.1","org":"Anthropic","score":0.7371,"input_cost":15.0,"output_cost":75.0,"blended_cost":30.0,"is_open_source":false,"latency":46.3,"source":"vals.ai"},{"name":"Claude Opus 4","org":"Anthropic","score":0.7331,"input_cost":15.0,"output_cost":75.0,"blended_cost":30.0,"is_open_source":false,"latency":14.0,"source":"vals.ai"}],"pareto":[{"name":"Llama 3.2 11B","org":"Meta","score":0.3882,"input_cost":0.049,"output_cost":0.049,"blended_cost":0.049,"is_open_source":true,"latency":38.1,"source":"vals.ai"},{"name":"Llama 4 Scout","org":"Meta","score":0.5875,"input_cost":0.08,"output_cost":0.3,"blended_cost":0.135,"is_open_source":true,"latency":10.5,"source":"vals.ai"},{"name":"GPT-5 Nano","org":"OpenAI","score":0.7094,"input_cost":0.049999999999999996,"output_cost":0.39999999999999997,"blended_cost":0.1375,"is_open_source":false,"latency":30.8,"source":"vals.ai"},{"name":"Gemini 2.5 Flash-Lite (thinking)","org":"Google","score":0.7543,"input_cost":0.09999999999999999,"output_cost":0.39999999999999997,"blended_cost":0.175,"is_open_source":false,"latency":25.7,"source":"vals.ai"},{"name":"GPT-5 Mini","org":"OpenAI","score":0.7891,"input_cost":0.25,"output_cost":2.0,"blended_cost":0.6875,"is_open_source":false,"latency":26.7,"source":"vals.ai"},{"name":"Gemini 2.5 Flash (thinking)","org":"Google","score":0.8075,"input_cost":0.3,"output_cost":2.5,"blended_cost":0.85,"is_open_source":false,"latency":27.9,"source":"vals.ai"},{"name":"Kimi K2.5 Thinking","org":"Moonshot AI","score":0.8434,"input_cost":0.44999999999999996,"output_cost":2.25,"blended_cost":0.9,"is_open_source":false,"latency":110.0,"source":"vals.ai"},{"name":"Gemini 3 Flash Preview","org":"Google","score":0.8763,"input_cost":0.5,"output_cost":3.0,"blended_cost":1.125,"is_open_source":false,"latency":27.9,"source":"vals.ai"}],"benchmark":{"name":"MMMU","description":"Independently evaluated by Vals.ai. MMMU tests multimodal reasoning across 30 subjects. Pricing from OpenRouter.","max_score":1.0},"sources":["vals.ai (scores + latency)","openrouter.ai (pricing)"]};
+// ── RAW DATA (from processed.json — LayerLens MMMU, April 2026) ──
+const RAW_DATA = [{"name":"DeepSeek V3","org":"DeepSeek","score":0.482,"input_cost":0.014,"output_cost":0.028,"blended_cost":0.0233,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Phi 4","org":"Microsoft","score":0.397,"input_cost":0.065,"output_cost":0.14,"blended_cost":0.1117,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Gemma 3 27B","org":"Google","score":0.539,"input_cost":0.08,"output_cost":0.16,"blended_cost":0.1333,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Mistral Small 3.2 24B","org":"Mistral AI","score":0.559,"input_cost":0.075,"output_cost":0.2,"blended_cost":0.1417,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Qwen3.5-Flash","org":"Alibaba/Qwen","score":0.768,"input_cost":0.065,"output_cost":0.26,"blended_cost":0.1517,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Qwen3 32B","org":"Alibaba/Qwen","score":0.521,"input_cost":0.08,"output_cost":0.24,"blended_cost":0.16,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Qwen3 30B A3B","org":"Alibaba/Qwen","score":0.49,"input_cost":0.08,"output_cost":0.28,"blended_cost":0.1733,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Llama 4 Scout","org":"Meta","score":0.423,"input_cost":0.08,"output_cost":0.3,"blended_cost":0.18,"is_open_source":true,"latency":0.31,"source":"layerlens.ai"},{"name":"Gemini 2.0 Flash","org":"Google","score":0.69,"input_cost":0.1,"output_cost":0.4,"blended_cost":0.2333,"is_open_source":false,"latency":0.4,"source":"layerlens.ai"},{"name":"QwQ 32B","org":"Alibaba/Qwen","score":0.529,"input_cost":0.15,"output_cost":0.58,"blended_cost":0.3433,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Llama 4 Maverick","org":"Meta","score":0.313,"input_cost":0.15,"output_cost":0.6,"blended_cost":0.35,"is_open_source":true,"latency":0.2,"source":"layerlens.ai"},{"name":"Grok 4 Fast Thinking","org":"xAI","score":0.604,"input_cost":0.2,"output_cost":0.5,"blended_cost":0.3667,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Qwen3.5-35B-A3B","org":"Alibaba/Qwen","score":0.764,"input_cost":0.163,"output_cost":0.9,"blended_cost":0.463,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Grok 3 Mini Beta","org":"xAI","score":0.524,"input_cost":0.3,"output_cost":0.5,"blended_cost":0.4667,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Qwen3 VL 235B A22B","org":"Alibaba/Qwen","score":0.682,"input_cost":0.2,"output_cost":0.88,"blended_cost":0.4933,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Qwen3.5-27B","org":"Alibaba/Qwen","score":0.776,"input_cost":0.195,"output_cost":0.9,"blended_cost":0.495,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Qwen3.5 397B A17B","org":"Alibaba/Qwen","score":0.218,"input_cost":0.39,"output_cost":0.9,"blended_cost":0.69,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Qwen3.5 Plus","org":"Alibaba/Qwen","score":0.131,"input_cost":0.26,"output_cost":1.56,"blended_cost":0.78,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"GPT-5 Mini","org":"OpenAI","score":0.753,"input_cost":0.25,"output_cost":2.0,"blended_cost":0.9167,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Qwen3.5-122B-A10B","org":"Alibaba/Qwen","score":0.781,"input_cost":0.26,"output_cost":2.08,"blended_cost":0.9533,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Mistral Medium 3","org":"Mistral AI","score":0.587,"input_cost":0.4,"output_cost":2.0,"blended_cost":1.0667,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Mistral Medium 3.1","org":"Mistral AI","score":0.581,"input_cost":0.4,"output_cost":2.0,"blended_cost":1.0667,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Gemini 2.5 Flash","org":"Google","score":0.53,"input_cost":0.3,"output_cost":2.5,"blended_cost":1.1333,"is_open_source":false,"latency":0.7,"source":"layerlens.ai"},{"name":"Llama 3.1 405B Instruct","org":"Meta","score":0.452,"input_cost":0.9,"output_cost":0.9,"blended_cost":1.2,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"DeepSeek R1","org":"DeepSeek","score":0.507,"input_cost":0.55,"output_cost":2.0,"blended_cost":1.2167,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Nova Pro 1.0","org":"Amazon","score":0.501,"input_cost":0.8,"output_cost":3.2,"blended_cost":1.8667,"is_open_source":false,"latency":0.5,"source":"layerlens.ai"},{"name":"Qwen3 Max","org":"Alibaba/Qwen","score":0.574,"input_cost":0.78,"output_cost":3.9,"blended_cost":2.08,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Claude 3.5 Haiku","org":"Anthropic","score":0.543,"input_cost":0.8,"output_cost":4.0,"blended_cost":2.1333,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"o4 Mini High","org":"OpenAI","score":0.792,"input_cost":1.1,"output_cost":4.4,"blended_cost":2.5667,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Claude Haiku 4.5","org":"Anthropic","score":0.652,"input_cost":1.0,"output_cost":5.0,"blended_cost":2.6667,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"GPT-5","org":"OpenAI","score":0.791,"input_cost":1.25,"output_cost":10.0,"blended_cost":4.5833,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"GPT-5.1","org":"OpenAI","score":0.607,"input_cost":1.25,"output_cost":10.0,"blended_cost":4.5833,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"GPT-4.1","org":"OpenAI","score":0.693,"input_cost":2.0,"output_cost":8.0,"blended_cost":4.6667,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Inflection 3 Pi","org":"Inflection","score":0.42,"input_cost":2.5,"output_cost":10.0,"blended_cost":5.8333,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Command A","org":"Cohere","score":0.379,"input_cost":2.5,"output_cost":10.0,"blended_cost":5.8333,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"GPT-5.2","org":"OpenAI","score":0.623,"input_cost":1.75,"output_cost":14.0,"blended_cost":6.4167,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Claude Sonnet 4.6","org":"Anthropic","score":0.753,"input_cost":3.0,"output_cost":15.0,"blended_cost":8.0,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Claude Sonnet 4.5 Thinking","org":"Anthropic","score":0.729,"input_cost":3.0,"output_cost":15.0,"blended_cost":8.0,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Claude Sonnet 4.5","org":"Anthropic","score":0.717,"input_cost":3.0,"output_cost":15.0,"blended_cost":8.0,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Claude 3.7 Sonnet","org":"Anthropic","score":0.669,"input_cost":3.0,"output_cost":15.0,"blended_cost":8.0,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Grok 3 Beta","org":"xAI","score":0.491,"input_cost":3.0,"output_cost":15.0,"blended_cost":8.0,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Claude Opus 4.5","org":"Anthropic","score":0.763,"input_cost":5.0,"output_cost":25.0,"blended_cost":13.3333,"is_open_source":false,"latency":null,"source":"layerlens.ai"},{"name":"Claude Opus 4.5 Thinking","org":"Anthropic","score":0.763,"input_cost":5.0,"output_cost":25.0,"blended_cost":13.3333,"is_open_source":false,"latency":null,"source":"layerlens.ai"}];
 
-let chart;
-let currentSort = { key: 'blended_cost', asc: true };
+// ── Org color map ──
+const ORG_COLORS = {
+  'OpenAI':      { bg: 'rgba(74,222,128,0.7)',   border: '#4ade80', text: '#4ade80' },
+  'Anthropic':   { bg: 'rgba(251,191,36,0.7)',   border: '#fbbf24', text: '#fbbf24' },
+  'Google':      { bg: 'rgba(96,165,250,0.7)',   border: '#60a5fa', text: '#60a5fa' },
+  'Meta':        { bg: 'rgba(168,85,247,0.7)',   border: '#a855f7', text: '#a855f7' },
+  'Alibaba/Qwen':{ bg: 'rgba(251,113,133,0.7)', border: '#fb7185', text: '#fb7185' },
+  'xAI':         { bg: 'rgba(249,115,22,0.7)',  border: '#f97316', text: '#f97316' },
+  'Mistral AI':  { bg: 'rgba(34,211,238,0.7)',  border: '#22d3ee', text: '#22d3ee' },
+  'DeepSeek':    { bg: 'rgba(132,204,22,0.7)',  border: '#84cc16', text: '#84cc16' },
+  'Microsoft':   { bg: 'rgba(59,130,246,0.7)',   border: '#3b82f6', text: '#3b82f6' },
+  'Amazon':      { bg: 'rgba(249,115,22,0.5)',  border: '#f97316', text: '#f97316' },
+  'Cohere':      { bg: 'rgba(236,72,153,0.7)',  border: '#ec4899', text: '#ec4899' },
+  'Inflection':  { bg: 'rgba(168,85,247,0.5)',  border: '#a855f7', text: '#a855f7' },
+};
 
-function getLatencyColor(lat) {
-  if (lat === null) return '#333';
-  if (lat <= 1) return '#4ade80';
-  if (lat <= 3) return '#fbbf24';
-  if (lat <= 10) return '#fb923c';
-  return '#f87171';
-}
+// ── State ──
+let chart = null;
+let sortState = { key: 'blended_cost', asc: true };
+let activeProviders = new Set();
+let chartMode = 'all'; // 'all' | 'pareto' | 'open'
+let highlightedModel = null;
+let searchQuery = '';
+let maxCost = 15;
 
-function getLatencyBarWidth(lat, maxLat) {
-  if (lat === null) return 0;
-  return Math.max(4, (lat / maxLat) * 60);
-}
-
+// ── Compute Pareto ──
 function computePareto(models) {
   const sorted = [...models].sort((a, b) => a.blended_cost - b.blended_cost);
   const pareto = [];
   let maxScore = -1;
   for (const m of sorted) {
-    if (m.score > maxScore) {
-      pareto.push(m);
-      maxScore = m.score;
-    }
+    if (m.score > maxScore) { pareto.push(m); maxScore = m.score; }
   }
   return pareto;
 }
 
-function isMatch(model, query) {
-  if (!query) return true;
-  const q = query.toLowerCase();
-  return model.name.toLowerCase().includes(q) || model.org.toLowerCase().includes(q);
+// ── Filter models ──
+function getFilteredModels() {
+  let models = RAW_DATA;
+  if (activeProviders.size > 0) {
+    models = models.filter(m => activeProviders.has(m.org));
+  }
+  models = models.filter(m => m.blended_cost <= maxCost);
+  if (chartMode === 'open') {
+    models = models.filter(m => m.is_open_source);
+  }
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    models = models.filter(m =>
+      m.name.toLowerCase().includes(q) || m.org.toLowerCase().includes(q)
+    );
+  }
+  return models;
 }
 
+// ── Build header stats ──
+function buildHeaderStats() {
+  const container = document.getElementById('headerStats');
+  const pareto = computePareto(RAW_DATA);
+  const best = RAW_DATA.reduce((a, b) => a.score > b.score ? a : b);
+  const cheapest = RAW_DATA.reduce((a, b) => a.blended_cost < b.blended_cost ? a : b);
+  container.innerHTML = `
+    <div class="stat-card">
+      <div class="val">${RAW_DATA.length}</div>
+      <div class="lbl">Models</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">${pareto.length}</div>
+      <div class="lbl">Pareto</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">${(best.score*100).toFixed(1)}%</div>
+      <div class="lbl">Best Score</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">${(cheapest.blended_cost < 0.1 ? cheapest.blended_cost.toFixed(3) : cheapest.blended_cost.toFixed(2))}</div>
+      <div class="lbl">Min Cost</div>
+    </div>
+  `;
+}
+
+// ── Build provider chips ──
+function buildProviderChips() {
+  const container = document.getElementById('providerChips');
+  const providers = [...new Set(RAW_DATA.map(m => m.org))].sort();
+  container.innerHTML = providers.map(p => {
+    const isOSS = RAW_DATA.some(m => m.org === p && m.is_open_source);
+    return `<button class="chip${isOSS ? ' oss' : ''}" data-org="${p}">${p}${isOSS ? ' ★' : ''}</button>`;
+  }).join('');
+  container.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const org = chip.dataset.org;
+      if (activeProviders.has(org)) {
+        activeProviders.delete(org);
+        chip.classList.remove('active');
+      } else {
+        activeProviders.add(org);
+        chip.classList.add('active');
+      }
+      rebuild();
+    });
+  });
+}
+
+// ── Build table ──
+function buildTable(models) {
+  const paretoSet = new Set(computePareto(RAW_DATA).map(m => m.name));
+  const sorted = [...models].sort((a, b) => {
+    let av = a[sortState.key], bv = b[sortState.key];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1; if (bv == null) return -1;
+    if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return sortState.asc ? -1 : 1;
+    if (av > bv) return sortState.asc ? 1 : -1;
+    return 0;
+  });
+
+  const tbody = document.querySelector('#modelTable tbody');
+  tbody.innerHTML = '';
+  sorted.forEach((m, i) => {
+    const isPareto = paretoSet.has(m.name);
+    const isHighlighted = highlightedModel === m.name;
+    const row = document.createElement('tr');
+    if (isPareto) row.classList.add('highlighted');
+    if (isHighlighted) row.style.boxShadow = 'inset 3px 0 0 #6366f1';
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', () => {
+      highlightedModel = highlightedModel === m.name ? null : m.name;
+      buildTable(getFilteredModels());
+      // highlight in chart
+      if (chart) chart.update('none');
+    });
+    const color = ORG_COLORS[m.org] || { bg: 'rgba(156,163,175,0.5)', border: '#9ca3af', text: '#9ca3af' };
+    row.innerHTML = `
+      <td style="color:var(--text3);font-size:0.75rem">${i+1}</td>
+      <td style="font-weight:600">${m.name}</td>
+      <td><span class="org-badge${m.is_open_source ? ' open-source' : ''}" style="border-color:${color.border};color:${color.text}">${m.org}</span></td>
+      <td>
+        <div class="score-bar-wrap">
+          <div class="score-bar-bg">
+            <div class="score-bar" style="width:${m.score*100}%"></div>
+          </div>
+          <span>${(m.score*100).toFixed(1)}%</span>
+        </div>
+      </td>
+      <td>$${m.input_cost}</td>
+      <td>$${m.output_cost}</td>
+      <td>$${m.blended_cost.toFixed(4)}</td>
+      <td>${isPareto ? '<span class="tag tag-pareto">Pareto</span>' : ''}${m.is_open_source ? ' <span class="tag" style="background:rgba(74,222,128,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.3)">OSS</span>' : ''}</td>
+    `;
+    tbody.appendChild(row);
+  });
+  document.getElementById('modelCount').textContent = `(${models.length} shown)`;
+}
+
+// ── Build chart ──
 function buildChart() {
   const showLabels = document.getElementById('showLabels').checked;
-  const showPareto = document.getElementById('showPareto').checked;
-  const openOnly = document.getElementById('showOpenSource').checked;
+  const showParetoLine = document.getElementById('showParetoLine').checked;
   const scaleType = document.getElementById('scaleSelect').value;
-  const searchQuery = document.getElementById('searchInput').value.trim();
-  const hasSearch = searchQuery.length > 0;
+  const filtered = getFilteredModels();
+  const pareto = computePareto(filtered);
+  const paretoSet = new Set(pareto.map(p => p.name));
 
-  let models = RAW_DATA.models;
-  if (openOnly) models = models.filter(m => m.is_open_source);
+  // Separate
+  const paretoModels = filtered.filter(m => paretoSet.has(m.name));
+  const otherModels = filtered.filter(m => !paretoSet.has(m.name));
 
-  const pareto = computePareto(models);
-  const paretoNames = new Set(pareto.map(p => p.name));
-  const nonPareto = models.filter(m => !paretoNames.has(m.name));
-
-  // Dim factor for non-matching points when searching
-  const dimAlpha = 0.1;
-  const dimBorder = 0.15;
-  const dimRadius = 3;
-
-  function pointProps(m, baseAlpha, baseBorder, baseRadius, color) {
-    const matched = isMatch(m, searchQuery);
-    if (!hasSearch || matched) {
-      return {
-        backgroundColor: color.replace('ALPHA', baseAlpha),
-        borderColor: color.replace('ALPHA', baseBorder),
-        pointRadius: matched && hasSearch ? baseRadius + 3 : baseRadius,
-        borderWidth: matched && hasSearch ? 2.5 : 1,
-      };
-    }
+  function makeDataset(models, label, isPareto) {
+    if (!models.length) return null;
+    const colors = models.map(m => {
+      const c = ORG_COLORS[m.org] || { bg: 'rgba(156,163,175,0.7)', border: '#9ca3af' };
+      return { bg: c.bg, border: c.border };
+    });
     return {
-      backgroundColor: color.replace('ALPHA', dimAlpha),
-      borderColor: color.replace('ALPHA', dimBorder),
-      pointRadius: dimRadius,
-      borderWidth: 0.5,
+      label,
+      data: models.map(m => ({ x: m.blended_cost, y: m.score, name: m.name })),
+      backgroundColor: colors.map(c => c.bg),
+      borderColor: colors.map(c => c.border),
+      pointRadius: models.map(m => highlightedModel === m.name ? 12 : (isPareto ? 9 : 5)),
+      borderWidth: models.map(m => highlightedModel === m.name ? 3 : (isPareto ? 2 : 1)),
+      pointHoverRadius: 11,
     };
   }
 
   const datasets = [];
+  const other = makeDataset(otherModels.filter(m => !m.is_open_source), 'Closed');
+  const openOther = makeDataset(otherModels.filter(m => m.is_open_source), 'Open');
+  const paretoD = makeDataset(paretoModels, 'Pareto', true);
+  if (other) datasets.push(other);
+  if (openOther) datasets.push(openOther);
+  if (paretoD) datasets.push(paretoD);
 
-  // When searching, we need per-point styling, so use arrays
-  const closedNP = nonPareto.filter(m => !m.is_open_source);
-  if (closedNP.length) {
-    const bgColors = [], bdColors = [], radii = [], bdWidths = [];
-    closedNP.forEach(m => {
-      const matched = isMatch(m, searchQuery);
-      if (!hasSearch || matched) {
-        bgColors.push(matched && hasSearch ? 'rgba(96,165,250,0.9)' : 'rgba(96,165,250,0.5)');
-        bdColors.push('rgba(96,165,250,0.8)');
-        radii.push(matched && hasSearch ? 9 : 5);
-        bdWidths.push(matched && hasSearch ? 2.5 : 1);
-      } else {
-        bgColors.push('rgba(96,165,250,' + dimAlpha + ')');
-        bdColors.push('rgba(96,165,250,' + dimBorder + ')');
-        radii.push(dimRadius);
-        bdWidths.push(0.5);
-      }
-    });
-    datasets.push({
-      label: 'Closed source',
-      data: closedNP.map(m => ({ x: m.blended_cost, y: m.score, meta: m })),
-      backgroundColor: bgColors,
-      borderColor: bdColors,
-      pointRadius: radii,
-      borderWidth: bdWidths,
-      pointHoverRadius: 10,
-    });
-  }
-
-  const openNP = nonPareto.filter(m => m.is_open_source);
-  if (openNP.length) {
-    const bgColors = [], bdColors = [], radii = [], bdWidths = [];
-    openNP.forEach(m => {
-      const matched = isMatch(m, searchQuery);
-      if (!hasSearch || matched) {
-        bgColors.push(matched && hasSearch ? 'rgba(74,222,128,0.9)' : 'rgba(74,222,128,0.5)');
-        bdColors.push('rgba(74,222,128,0.8)');
-        radii.push(matched && hasSearch ? 9 : 5);
-        bdWidths.push(matched && hasSearch ? 2.5 : 1);
-      } else {
-        bgColors.push('rgba(74,222,128,' + dimAlpha + ')');
-        bdColors.push('rgba(74,222,128,' + dimBorder + ')');
-        radii.push(dimRadius);
-        bdWidths.push(0.5);
-      }
-    });
-    datasets.push({
-      label: 'Open source',
-      data: openNP.map(m => ({ x: m.blended_cost, y: m.score, meta: m })),
-      backgroundColor: bgColors,
-      borderColor: bdColors,
-      pointRadius: radii,
-      borderWidth: bdWidths,
-      pointHoverRadius: 10,
-    });
-  }
-
-  if (pareto.length) {
-    const bgColors = [], bdColors = [], radii = [], bdWidths = [];
-    pareto.forEach(m => {
-      const matched = isMatch(m, searchQuery);
-      if (!hasSearch || matched) {
-        bgColors.push(matched && hasSearch ? 'rgba(245,158,11,1)' : 'rgba(245,158,11,0.7)');
-        bdColors.push('#f59e0b');
-        radii.push(matched && hasSearch ? 11 : 7);
-        bdWidths.push(matched && hasSearch ? 3 : 2);
-      } else {
-        bgColors.push('rgba(245,158,11,' + dimAlpha + ')');
-        bdColors.push('rgba(245,158,11,' + dimBorder + ')');
-        radii.push(dimRadius);
-        bdWidths.push(0.5);
-      }
-    });
-    datasets.push({
-      label: 'Pareto optimal',
-      data: pareto.map(m => ({ x: m.blended_cost, y: m.score, meta: m })),
-      backgroundColor: bgColors,
-      borderColor: bdColors,
-      pointRadius: radii,
-      borderWidth: bdWidths,
-      pointHoverRadius: 12,
-      pointStyle: 'rectRot',
-    });
-  }
-
-  if (showPareto && pareto.length > 1) {
+  // Pareto frontier line
+  if (showParetoLine && pareto.length > 1) {
     const lineData = [];
     for (let i = 0; i < pareto.length; i++) {
       lineData.push({ x: pareto[i].blended_cost, y: pareto[i].score });
       if (i < pareto.length - 1) {
-        lineData.push({ x: pareto[i + 1].blended_cost, y: pareto[i].score });
+        lineData.push({ x: pareto[i+1].blended_cost, y: pareto[i].score });
       }
     }
     datasets.push({
-      label: 'Pareto frontier',
+      label: 'Frontier',
       data: lineData,
       type: 'line',
-      borderColor: hasSearch ? 'rgba(245,158,11,0.15)' : 'rgba(245,158,11,0.4)',
-      borderWidth: 2, borderDash: [6, 3],
-      pointRadius: 0, fill: false, tension: 0,
+      borderColor: 'rgba(251,191,36,0.35)',
+      borderWidth: 2,
+      borderDash: [6, 3],
+      pointRadius: 0,
+      fill: false,
+      tension: 0,
     });
   }
 
@@ -401,20 +690,27 @@ function buildChart() {
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'nearest', intersect: true },
+      onClick: (evt, elements) => {
+        if (elements.length) {
+          const idx = elements[0].index;
+          const dsIdx = elements[0].datasetIndex;
+          const name = chart.data.datasets[dsIdx].data[idx]?.name;
+          if (name) {
+            highlightedModel = highlightedModel === name ? null : name;
+            buildChart();
+            buildTable(getFilteredModels());
+          }
+        }
+      },
       plugins: {
         legend: { display: false },
         zoom: {
-          pan: {
-            enabled: true,
-            mode: 'xy',
-          },
+          pan: { enabled: true, mode: 'xy' },
           zoom: {
             wheel: { enabled: true },
             pinch: { enabled: true },
             mode: 'xy',
-            onZoomComplete({chart}) {
-              chart.update('none');
-            },
+            onZoomComplete() { chart.update('none'); },
           },
           limits: {
             x: { min: 'original', max: 'original' },
@@ -422,183 +718,162 @@ function buildChart() {
           },
         },
         tooltip: {
-          backgroundColor: '#1a1a1a',
-          borderColor: '#333', borderWidth: 1,
-          titleColor: '#fff', bodyColor: '#ccc', padding: 12,
+          backgroundColor: '#1c1c1f',
+          borderColor: '#333',
+          borderWidth: 1,
+          titleColor: '#fff',
+          bodyColor: '#ccc',
+          padding: 12,
           callbacks: {
-            title(items) {
-              const m = items[0]?.raw?.meta;
-              return m ? `${m.name} (${m.org})` : '';
+            title([item]) {
+              const d = item.raw;
+              return d?.name || '';
             },
             label(item) {
-              const m = item.raw?.meta;
+              const m = RAW_DATA.find(m => m.name === item.raw?.name);
               if (!m) return '';
-              const lines = [
-                `Score: ${(m.score * 100).toFixed(1)}%`,
+              const isP = paretoSet.has(m.name);
+              return [
+                `Score: ${(m.score*100).toFixed(1)}%`,
                 `Input: $${m.input_cost}/M`,
                 `Output: $${m.output_cost}/M`,
-                `Blended: $${m.blended_cost}/M`,
-              ];
-              if (m.latency !== null) lines.push(`Latency: ${m.latency}s`);
-              lines.push(m.is_open_source ? '🟢 Open source' : '🔵 Closed source');
-              return lines;
+                `Blended: $${m.blended_cost.toFixed(4)}/M`,
+                `${m.is_open_source ? '🟢 Open source' : '🔵 ' + m.org}`,
+                isP ? '⭐ Pareto optimal' : '',
+              ].filter(Boolean);
             },
+          },
+        },
+        labelPlugin: {
+          afterDatasetsDraw(c) {
+            if (!showLabels) return;
+            const ctx = c.ctx;
+            ctx.save();
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+            c.data.datasets.forEach((ds, di) => {
+              if (ds.label === 'Frontier') return;
+              const meta = c.getDatasetMeta(di);
+              meta.data.forEach((pt, pi) => {
+                const name = ds.data[pi]?.name;
+                if (!name) return;
+                const isP = ds.label === 'Pareto';
+                const isHL = name === highlightedModel;
+                ctx.font = isHL ? 'bold 11px system-ui' : '10px system-ui';
+                ctx.fillStyle = isHL ? '#fff' : isP ? '#fbbf24' : 'rgba(255,255,255,0.5)';
+                ctx.fillText(name, pt.x + 6, pt.y - 3);
+              });
+            });
+            ctx.restore();
           },
         },
       },
       scales: {
         x: {
           type: scaleType === 'log' ? 'logarithmic' : 'linear',
-          title: { display: true, text: 'Blended Cost ($/M tokens)', color: '#888' },
-          grid: { color: '#1a1a1a' },
-          ticks: { color: '#666', callback(val) { return '$' + val; } },
+          title: { display: true, text: 'Blended Cost ($/M tokens)', color: '#52525b' },
+          grid: { color: '#1c1c1f' },
+          ticks: { color: '#52525b', callback(v) { return '$' + v; } },
         },
         y: {
-          title: { display: true, text: 'MMMU Score', color: '#888' },
-          grid: { color: '#1a1a1a' },
-          ticks: { color: '#666', callback(val) { return (val * 100).toFixed(0) + '%'; } },
-          min: 0.3, max: 0.95,
+          title: { display: true, text: 'MMMU Score', color: '#52525b' },
+          grid: { color: '#1c1c1f' },
+          ticks: { color: '#52525b', callback(v) { return (v*100).toFixed(0) + '%'; } },
+          min: 0.1,
+          max: 0.85,
         },
       },
     },
     plugins: [{
       id: 'labelPlugin',
       afterDatasetsDraw(chart) {
-        if (!showLabels) return;
-        const sq = document.getElementById('searchInput').value.trim().toLowerCase();
+        const showLbls = document.getElementById('showLabels').checked;
+        if (!showLbls) return;
         const ctx = chart.ctx;
         ctx.save();
         ctx.textAlign = 'left';
         ctx.textBaseline = 'bottom';
         chart.data.datasets.forEach((ds, di) => {
-          if (ds.label === 'Pareto frontier') return;
+          if (ds.label === 'Frontier') return;
           const meta = chart.getDatasetMeta(di);
-          meta.data.forEach((point, pi) => {
-            const m = ds.data[pi]?.meta;
-            if (!m) return;
-            const matched = isMatch(m, sq);
-            const isPareto = ds.label === 'Pareto optimal';
-            if (sq && !matched) {
-              // Dim label
-              ctx.font = '9px -apple-system, sans-serif';
-              ctx.fillStyle = 'rgba(255,255,255,0.1)';
-            } else if (sq && matched) {
-              // Highlighted label
-              ctx.font = 'bold 12px -apple-system, sans-serif';
-              ctx.fillStyle = isPareto ? '#fbbf24' : '#fff';
-            } else {
-              // Normal label
-              ctx.font = '10px -apple-system, sans-serif';
-              ctx.fillStyle = isPareto ? '#f59e0b' : 'rgba(255,255,255,0.45)';
-            }
-            ctx.fillText(m.name, point.x + 6, point.y - 4);
+          meta.data.forEach((pt, pi) => {
+            const name = ds.data[pi]?.name;
+            if (!name) return;
+            const isP = ds.label === 'Pareto';
+            const isHL = name === highlightedModel;
+            ctx.font = isHL ? 'bold 11px system-ui' : '10px system-ui';
+            ctx.fillStyle = isHL ? '#fff' : isP ? '#fbbf24' : 'rgba(255,255,255,0.5)';
+            ctx.fillText(name, pt.x + 6, pt.y - 3);
           });
         });
         ctx.restore();
-      }
+      },
     }],
   };
 
   if (chart) chart.destroy();
   chart = new Chart(document.getElementById('chart'), config);
-
-  renderTable(pareto);
-
-  // Update match count
-  if (hasSearch) {
-    const matchCount = models.filter(m => isMatch(m, searchQuery)).length;
-    document.getElementById('searchInput').style.borderColor = matchCount > 0 ? '#60a5fa' : '#f87171';
-  } else {
-    document.getElementById('searchInput').style.borderColor = '#333';
-  }
 }
 
-function renderTable(pareto) {
-  const paretoNames = new Set(pareto.map(p => p.name));
-  const maxLat = Math.max(...pareto.map(m => m.latency || 0), 1);
-
-  // Sort
-  const sorted = [...pareto].sort((a, b) => {
-    const key = currentSort.key;
-    let av = a[key], bv = b[key];
-    // Handle nulls (push to end)
-    if (av === null && bv === null) return 0;
-    if (av === null) return 1;
-    if (bv === null) return -1;
-    if (typeof av === 'string') {
-      av = av.toLowerCase(); bv = bv.toLowerCase();
-    }
-    if (av < bv) return currentSort.asc ? -1 : 1;
-    if (av > bv) return currentSort.asc ? 1 : -1;
-    return 0;
-  });
-
-  const tbody = document.querySelector('#paretoTable tbody');
-  tbody.innerHTML = '';
-  sorted.forEach(m => {
-    const latBar = m.latency !== null
-      ? `<span class="latency-bar" style="background:${getLatencyColor(m.latency)};width:${getLatencyBarWidth(m.latency, maxLat)}px"></span>${m.latency}s`
-      : '<span class="na">n/a</span>';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="font-weight:600;color:#fff">${m.name}</td>
-      <td>${m.org}</td>
-      <td>${(m.score * 100).toFixed(1)}%</td>
-      <td>$${m.input_cost}</td>
-      <td>$${m.output_cost}</td>
-      <td>$${m.blended_cost}</td>
-      <td>${latBar}</td>
-      <td>
-        <span class="pareto-badge">Pareto</span>
-        ${m.is_open_source ? ' <span class="open-source-badge">OSS</span>' : ''}
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  // Update sort indicators
-  document.querySelectorAll('#paretoTable th').forEach(th => {
-    const key = th.dataset.sort;
-    th.classList.toggle('sorted', key === currentSort.key);
-    const arrow = th.querySelector('.sort-arrow');
-    if (arrow) {
-      arrow.textContent = key === currentSort.key
-        ? (currentSort.asc ? '▲' : '▼')
-        : '▲▼';
-    }
-  });
+// ── Rebuild ──
+function rebuild() {
+  const filtered = getFilteredModels();
+  buildChart();
+  buildTable(filtered);
 }
 
-// Sort click handlers
-document.querySelectorAll('#paretoTable th[data-sort]').forEach(th => {
+// ── Sort ──
+document.querySelectorAll('#modelTable th[data-sort]').forEach(th => {
   th.addEventListener('click', () => {
     const key = th.dataset.sort;
-    if (currentSort.key === key) {
-      currentSort.asc = !currentSort.asc;
-    } else {
-      currentSort.key = key;
-      // Default: descending for score, ascending for cost/latency
-      currentSort.asc = ['name', 'org', 'input_cost', 'output_cost', 'blended_cost', 'latency'].includes(key);
-    }
-    buildChart(); // rebuilds table too
+    if (sortState.key === key) sortState.asc = !sortState.asc;
+    else { sortState.key = key; sortState.asc = key !== 'score'; }
+    document.querySelectorAll('#modelTable th').forEach(h => h.classList.remove('sorted'));
+    th.classList.add('sorted');
+    buildTable(getFilteredModels());
   });
 });
 
+// ── Events ──
 document.getElementById('scaleSelect').addEventListener('change', buildChart);
 document.getElementById('showLabels').addEventListener('change', buildChart);
-document.getElementById('showPareto').addEventListener('change', buildChart);
-document.getElementById('showOpenSource').addEventListener('change', buildChart);
-let searchTimeout;
-document.getElementById('searchInput').addEventListener('input', () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(buildChart, 150);
-});
-document.getElementById('resetZoom').addEventListener('click', () => {
-  if (chart) chart.resetZoom();
-});
-document.getElementById('genDate').textContent = new Date().toLocaleDateString();
+document.getElementById('showParetoLine').addEventListener('change', buildChart);
+document.getElementById('resetZoom').addEventListener('click', () => chart?.resetZoom());
 
+// Chart mode toggle
+['btnAll', 'btnPareto', 'btnOpenSrc'].forEach(id => {
+  document.getElementById(id).addEventListener('click', () => {
+    document.querySelectorAll('.chart-toggle button').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    chartMode = id === 'btnAll' ? 'all' : id === 'btnPareto' ? 'pareto' : 'open';
+    rebuild();
+  });
+});
+
+// Cost slider
+const costSlider = document.getElementById('costSlider');
+const costVal = document.getElementById('costVal');
+costSlider.addEventListener('input', () => {
+  maxCost = parseFloat(costSlider.value);
+  costVal.textContent = maxCost >= 14 ? 'Any' : '$' + maxCost + '/M';
+  rebuild();
+});
+
+// Search
+let st;
+document.getElementById('searchInput').addEventListener('input', () => {
+  clearTimeout(st);
+  st = setTimeout(() => {
+    searchQuery = document.getElementById('searchInput').value.trim();
+    rebuild();
+  }, 150);
+});
+
+// ── Init ──
+buildHeaderStats();
+buildProviderChips();
 buildChart();
+buildTable(RAW_DATA);
 </script>
 </body>
 </html>
